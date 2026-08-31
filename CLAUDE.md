@@ -416,6 +416,13 @@ estimated_cost_usd, avg_retrieval_score, answer_length, cache_hit
   사규**라 alpha가 0.5보다 낮은 쪽일 가능성이 크다. 측정으로 정할 것.
 - Phoenix 서버 패키지(`arize-phoenix`) 설치 여부 미확인.
   `arize-phoenix-otel`과 `openinference-instrumentation-langchain`은 설치돼 있다.
+- **이 개발 머신에서 `streamlit run app.py`가 기동하지 않는다.** 앱 코드 문제가 아니라
+  환경 의존성 충돌이다: `streamlit 1.58.0`이 `starlette>=0.40.0`이라 선언해 놓고 실제로는
+  `0.41.3`에 없는 `DEFAULT_EXCLUDED_CONTENT_TYPES`를 임포트한다(선언된 하한이 틀린 패키징 버그).
+  그런데 `fastapi 0.115.6`이 `starlette<0.42.0`으로 묶어 올릴 수도 없다.
+  게다가 이 파이썬은 `C:\Program Files\PsychoPy\python.exe`(공유 시스템 파이썬)이므로
+  임의로 버전을 바꾸면 PsychoPy가 깨질 수 있다. **프로젝트 전용 venv가 정답이다.**
+  `app.py`는 `python -m py_compile` 구문 검사만 통과했고 **실행은 확인되지 않았다.**
 - **개인정보 마스킹은 코드에 없다.** `docs/onprem-design.md` §4.4에 설계만 있다.
   더미데이터에 주민번호·연락처 형식을 생성하지 않는 것으로 대체하고 있다.
 - **`docs/onprem_architecture.md`가 `docs/onprem-design.md`와 중복이다.** 전자의 내용은

@@ -43,8 +43,13 @@
   배포하지 않는다. 깃헙에서 내려받아 로컬 실행하는 데모다
 - **브랜치**: `main`
 - **진행중(미완)**:
-  1. `app.py`가 `providers.py`에 연결되지 않았다. 데모 배너·모드 표시·방식 제한 미구현.
-     `CLAUDE.md` §2.4("몰래 늘리지 않는다")가 코드에만 있고 화면에는 안 보인다
+  1. **`streamlit run app.py`가 이 머신에서 기동하지 않는다.** 앱 코드가 아니라 환경 충돌이다:
+     `streamlit 1.58.0`이 `starlette>=0.40.0`이라 선언해 놓고 `0.41.3`에 없는
+     `DEFAULT_EXCLUDED_CONTENT_TYPES`를 임포트하는데, `fastapi 0.115.6`이 `starlette<0.42.0`으로
+     묶어 올릴 수도 없다. 파이썬이 `C:\Program Files\PsychoPy\python.exe`(공유)라
+     임의 변경은 PsychoPy를 깨뜨릴 위험이 있다. **프로젝트 전용 venv가 정답이고 사용자 결정 대기 중.**
+     `app.py`는 `providers.py` 연결·데모 배너·모드 표시·방식 제한까지 구현했으나
+     **구문 검사만 통과했고 화면은 한 번도 못 봤다**
   2. `ENSEMBLE_ALPHA = 0.5`에 근거가 없다. MRR 지표가 없어 alpha를 거부 임계값과 분리해
      고를 수단이 없다
   3. 발표용 설명 자료 없음

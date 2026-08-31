@@ -29,6 +29,8 @@ AX 실무 해커톤 **주제 01**: On-premise 환경 기반 RAG 서비스 구축
 ```bash
 git clone <this-repo>
 cd FC_Hackathon
+python -m venv .venv                  # 전용 가상환경 권장 (아래 주의 참조)
+.venv\Scriptsctivate               # macOS/Linux: source .venv/bin/activate
 pip install -r requirements.txt
 
 cp .env.local.example .env.local     # 가진 키만 채우세요. 전부 비워도 됩니다.
@@ -39,6 +41,10 @@ streamlit run app.py
 
 **Windows 주의**: 이 저장소는 `python3`가 아니라 `python`을 씁니다.
 PowerShell에는 `export`와 `VAR=x cmd` 문법이 없습니다. `$env:NAME="..."`를 쓰세요.
+
+**전용 venv를 권장하는 이유**: 시스템 파이썬에 다른 도구가 깔려 있으면 의존성이 충돌합니다.
+개발 머신에서 실제로 `streamlit`과 `fastapi`가 `starlette` 버전을 두고 충돌해
+`streamlit run`이 기동하지 못했습니다. venv를 쓰면 이 문제가 없습니다.
 
 ### 키가 하나도 없어도 됩니다
 

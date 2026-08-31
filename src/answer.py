@@ -6,6 +6,7 @@
 """
 import re
 
+from config import ABSTAIN_THRESHOLD, DEFAULT_MODE, ENSEMBLE_ALPHA
 from llm import complete
 from retriever import log_access, search, should_abstain
 
@@ -41,29 +42,30 @@ def _validate_citations(text, hits):
     return unknown
 
 
-def ask(query: str, role: str):
-    hits, max_score, blocked, backend = search(query, role)
+def ask(query: str, role: str, mode: str = DEFAULT_MODE, alpha: float = ENSEMBLE_ALPHA):
+    hits, max_score, blocked, backend = search(query, role, mode, alpha)
 
     result = {"query": query, "role": role, "hits": hits, "max_score": max_score,
-              "blocked_chunks": blocked, "backend": backend,
+              "blocked_chunks": blocked, "backend": backend, "mode": mode,
               "abstained": False, "reason": None, "unknown_citations": []}
 
     # 1겹: 검색 단계 거부
-    if not hits or should_abstain(max_score, backend):
+    if not hits or should_abstain(max_score, backend, mode):
         result.update(abstained=True, answer=ABSTAIN_MSG,
-                      reason=f"검색 최고 유사도 {max_score:.3f} 가 임계값 미만")
-        log_access(role, query, hits, True, blocked)
+                      reason=f"검색 최고 유사도 {max_score:.3f} < 임계값 "
+                             f"{ABSTAIN_THRESHOLD[backend][mode]:.2f}")
+        log_access(role, query, hits, True, blocked, mode)
         return result
 
     # 2겹: 생성 단계 거부
     raw = complete(SYSTEM, f"<근거>\n{_build_context(hits)}\n</근거>\n\n질문: {query}").strip()
     if "NO_ANSWER" in raw:
         result.update(abstained=True, answer=ABSTAIN_MSG, reason="모델이 근거 부족으로 판단")
-        log_access(role, query, hits, True, blocked)
+        log_access(role, query, hits, True, blocked, mode)
         return result
 
     # 3겹: 인용 검증
     result["unknown_citations"] = _validate_citations(raw, hits)
     result["answer"] = raw
-    log_access(role, query, hits, False, blocked)
+    log_access(role, query, hits, False, blocked, mode)
     return result
