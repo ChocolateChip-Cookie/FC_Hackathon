@@ -14,22 +14,44 @@ UI 와 CLI 가 같은 함수를 쓴다. 판정이 두 군데로 갈라지면 화
 """
 import os
 
-from config import CHROMA_DIR, EMBED_API, INDEX_DIR, OLLAMA_HOST
+from config import (CHAT_MODEL_OLLAMA, CHROMA_DIR, EMBED_API, INDEX_DIR,
+                    OLLAMA_HOST)
 
 
 def _has(name: str) -> bool:
     return bool(os.environ.get(name, "").strip())
 
 
-def _ollama_up(timeout: float = 0.4) -> bool:
-    """Ollama 가 실제로 떠 있는지 본다. 설치 여부가 아니라 응답 여부가 기준이다."""
+def ollama_models(timeout: float = 0.4):
+    """Ollama 가 갖고 있는 모델 목록. 서버가 안 떠 있으면 None.
+
+    None(서버 없음)과 []( 서버는 떴는데 모델 0개)를 구분한다. 사용자가 취할 행동이
+    다르기 때문이다: 전자는 Ollama 실행, 후자는 ollama pull.
+    """
+    import json
     import urllib.error
     import urllib.request
     try:
-        with urllib.request.urlopen(f"{OLLAMA_HOST}/api/tags", timeout=timeout):
-            return True
-    except (urllib.error.URLError, OSError):
+        with urllib.request.urlopen(f"{OLLAMA_HOST}/api/tags", timeout=timeout) as r:
+            return [m["name"] for m in json.loads(r.read()).get("models", [])]
+    except (urllib.error.URLError, OSError, ValueError, KeyError):
+        return None
+
+
+def _ollama_ready(timeout: float = 0.4) -> bool:
+    """생성에 실제로 쓸 수 있는지. **서버가 떴다는 것만으로는 부족하다.**
+
+    /api/tags 는 모델이 하나도 없어도 200 과 빈 목록을 준다. 그것을 준비됨으로 보면
+    capabilities() 가 없는 능력을 보고하고, 첫 질의에서야 실패한다.
+    설정된 모델이 실제로 있는지까지 확인한다.
+    """
+    names = ollama_models(timeout)
+    if not names:
         return False
+    want = CHAT_MODEL_OLLAMA
+    # "qwen2.5:7b" 와 "qwen2.5:7b-instruct-q4" 같은 변형을 같은 모델로 본다.
+    base = want.split(":")[0]
+    return any(n == want or n.split(":")[0] == base for n in names)
 
 
 def embed_backend() -> str:
@@ -68,7 +90,7 @@ def gen_backend() -> str:
     forced = os.environ.get("GEN_BACKEND", "").strip()
     if forced:
         return forced
-    if _ollama_up():
+    if _ollama_ready():
         return "ollama"
     for name, env in (("anthropic", "ANTHROPIC_API_KEY"),
                       ("upstage", "UPSTAGE_API_KEY"),
@@ -103,7 +125,17 @@ def capabilities() -> dict:
     if not dense_ok:
         reasons["ensemble"] = reasons.get("dense", "dense 검색이 불가능합니다")
     if gb == "none":
-        reasons["generation"] = "생성 키가 없습니다. 검색 결과만 표시합니다 (Ollama 또는 API 키 필요)"
+        # 서버가 떠 있는데 모델만 없는 경우와 아예 없는 경우는 사용자가 취할 행동이 다르다.
+        names = ollama_models()
+        if names is not None and not _ollama_ready():
+            reasons["generation"] = (
+                f"Ollama 는 떠 있으나 모델 {CHAT_MODEL_OLLAMA} 이(가) 없습니다. "
+                f"`ollama pull {CHAT_MODEL_OLLAMA}` 후 다시 시도하세요. "
+                "그때까지는 검색 결과만 표시합니다")
+        else:
+            reasons["generation"] = (
+                "생성 백엔드가 없습니다. 검색 결과만 표시합니다 "
+                "(Ollama 실행 또는 .env.local 에 API 키 1개)")
 
     return {
         "embed_backend": eb,
@@ -163,8 +195,14 @@ if __name__ == "__main__":
                 if v is not None:
                     os.environ[k] = v
 
-    ollama = _ollama_up()
-    print(f"Ollama 응답: {ollama}\n")
+    names = ollama_models()
+    ollama = _ollama_ready()
+    server = "없음" if names is None else "응답"
+    print(f"Ollama 서버 {server} / 모델 {names if names else '없음'} / 사용 가능 {ollama}\n")
+
+    # 서버가 떠 있고 모델이 0개인 상태는 실제로 발생했다.
+    # /api/tags 가 200 + 빈 목록을 주므로 서버 응답만 보면 없는 능력을 보고하게 된다.
+    assert not (names == [] and ollama), "모델 0개인데 사용 가능으로 판정됨"
 
     c = _probe({"ANTHROPIC_API_KEY": "x"})
     assert c["modes"] == ["bm25"], c

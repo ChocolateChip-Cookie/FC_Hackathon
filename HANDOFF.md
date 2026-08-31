@@ -43,17 +43,15 @@
   배포하지 않는다. 깃헙에서 내려받아 로컬 실행하는 데모다
 - **브랜치**: `main`
 - **진행중(미완)**:
-  1. **`streamlit run app.py`가 이 머신에서 기동하지 않는다.** 앱 코드가 아니라 환경 충돌이다:
-     `streamlit 1.58.0`이 `starlette>=0.40.0`이라 선언해 놓고 `0.41.3`에 없는
-     `DEFAULT_EXCLUDED_CONTENT_TYPES`를 임포트하는데, `fastapi 0.115.6`이 `starlette<0.42.0`으로
-     묶어 올릴 수도 없다. 파이썬이 `C:\Program Files\PsychoPy\python.exe`(공유)라
-     임의 변경은 PsychoPy를 깨뜨릴 위험이 있다. **프로젝트 전용 venv가 정답이고 사용자 결정 대기 중.**
-     `app.py`는 `providers.py` 연결·데모 배너·모드 표시·방식 제한까지 구현했으나
-     **구문 검사만 통과했고 화면은 한 번도 못 봤다**
-  2. `ENSEMBLE_ALPHA = 0.5`에 근거가 없다. MRR 지표가 없어 alpha를 거부 임계값과 분리해
-     고를 수단이 없다
+  1. **UI를 여전히 눈으로 못 봤다.** `streamlit run`은 이제 HTTP 200으로 뜬다
+     (streamlit 1.58 -> 1.56 다운그레이드로 해결). 그러나 브라우저 확장 미연결 + playwright
+     미설치라 **화면 렌더링은 확인하지 못했다.** 대신 화면에 들어갈 데이터를 시나리오
+     4단계로 검증했다
+  2. **Ollama 서버는 떠 있으나 모델이 0개다.** `ollama pull qwen2.5:7b` 하면
+     **LLM 생성 경로가 처음으로 실행된다.** 현재 가장 큰 미검증 영역
   3. 발표용 설명 자료 없음
   4. `docs/onprem_architecture.md`가 `docs/onprem-design.md`와 중복이고 낡았다. 삭제 대상
+  5. 죽은 중복본 3건 미삭제: `CLAUDE (2).md`, `golden_set.json`, `onprem_architecture.md`
 - **막힌 것 / 사람 결정 필요**:
   - **LLM 생성 경로가 한 번도 실행된 적이 없다.** API 키 3종 전부 미설정 + Ollama 미설치.
     출처 표기·인용 검증·인젝션 방어가 전부 미검증 상태로 남아 있다
@@ -140,6 +138,34 @@
 > - "다음 것"은 명령형이 아니라 **상태 서술형**으로 쓴다.
 >   나쁨: `테스트 추가할 것` / 좋음: `parseConfig의 빈 입력 경로에 테스트가 없음. 다른 분기는 tests/config.spec.ts가 덮고 있음`
 >   명령형은 자기 근거를 숨겨서, 코드가 움직인 뒤에도 그 지시가 아직 유효한지 판단할 수 없다.
+
+### 2026-08-31 [CC] Streamlit 기동 복구 + alpha 측정 확정 + Ollama 판정 버그 수정
+- **한 일**:
+  - `streamlit 1.58 -> 1.56` 다운그레이드로 기동 복구. 1.57부터 tornado -> starlette 전환인데
+    `fastapi 0.115.6`이 `starlette<0.42`로 묶어 올릴 수 없었다. `requirements.txt`에 `<1.57` 핀
+  - **`providers._ollama_up()` 버그 수정**: `/api/tags`가 모델 0개여도 200을 주는데 이를
+    "준비됨"으로 봐서 `can_generate: True`를 **없는 능력으로 보고**하고 있었다.
+    설정된 모델 존재까지 확인하도록 `_ollama_ready()`로 교체하고 안내 문구를 행동 지시로 바꿈
+  - `eval/evaluate.py`에 **MRR**과 **분리도** 추가, `--alpha-scan` 명령 신설
+  - `ENSEMBLE_ALPHA` 0.5 -> **0.8** (개발셋 분리도 기준). 임계값도 재확정
+- **검증**:
+  - `python -m streamlit run app.py` -> **HTTP 200**, 로그에 traceback 없음
+  - 데모 시나리오 4단계 데이터 검증: 신입 연차 -> 답변(0.709), 신입 연봉밴드 -> **거부**(0.233),
+    인사팀 같은 질문 -> **답변**(0.648, confidential 1순위), 창립기념일 -> **거부**(0.347).
+    권한 차단 배지 19/19/0/9 정상
+  - `--alpha-scan` -> MRR은 모든 alpha에서 1.000(변별력 0), 분리도는 0.727(alpha 0) ->
+    0.836(alpha 0.8~1.0). 동점이라 BM25 신호를 남기는 0.8 선택
+  - `--compare` (alpha 0.8) -> 홀드아웃 19: dense 14, bm25 14, **ensemble 15**. 신뢰구간 겹침
+  - `permission_matrix.py bm25` -> 96조합 반례 0건 (회귀)
+  - `providers.py` 자체 점검 통과. 모델 0개 상태를 잡는 assert 추가
+  - **[미검증]** 화면 렌더링. 브라우저 확장 미연결 + playwright 미설치
+  - **[미검증]** LLM 생성 경로. Ollama 모델 0개
+- **다음 것**:
+  - `ollama pull qwen2.5:7b` 하나면 생성 경로가 처음 실행된다. 그 전까지 `src/answer.py`의
+    거부 2겹·3겹, 출처 표기, 인용 검증이 전부 미검증으로 남는다
+  - MRR 1.000은 **검색 순위가 병목이 아니라는 뜻**이다. 개선 여지는 전부 거부 레이어에 있다
+  - alpha 0.5가 홀드아웃에서 1문항 높았으나(16 vs 15) 홀드아웃으로 되고르지 않았다.
+    잡음 범위이고, 되고르면 홀드아웃이 아니게 된다
 
 ### 2026-08-31 [CC] RAG 서비스 구축 + 해커톤 컨텍스트 고정
 - **한 일**:

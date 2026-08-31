@@ -44,7 +44,15 @@ TOP_K = 4
 # ensemble : alpha*dense + (1-alpha)*bm25  (alpha 는 UI 에서 사용자가 조절)
 RETRIEVAL_MODES = ("dense", "bm25", "ensemble")
 DEFAULT_MODE = "ensemble"
-ENSEMBLE_ALPHA = 0.5   # dense 쪽 가중치. 1.0 이면 dense, 0.0 이면 bm25 와 같아진다
+# dense 쪽 가중치. 1.0 이면 dense, 0.0 이면 bm25 와 같아진다.
+# 0.8 은 `python eval/evaluate.py --alpha-scan` 으로 **개발셋에서만** 고른 값이다.
+# 기준은 MRR 이 아니라 '분리도'(답변 가능 문항 점수 > 거부 문항 점수인 쌍의 비율)다.
+# MRR 은 모든 alpha 에서 1.000 이라 변별력이 없었다: 답변 가능 문항의 정답 문서가 항상
+# 1순위였다는 뜻이고, 이 시스템의 병목이 검색 순위가 아니라 거부 판정이라는 증거다.
+# 분리도는 0.0 에서 0.727, 0.8 에서 0.836 으로 오르고 0.8~1.0 이 동점이다.
+# 동점 구간에서는 조항 번호·부서명 같은 정확한 어휘 일치를 위해 BM25 신호를 남기는
+# 낮은 쪽을 택했다.
+ENSEMBLE_ALPHA = 0.8
 
 # BM25 원점수는 상한이 없어서 dense 코사인(0~1)과 그대로 더할 수 없다.
 # 질의마다 min-max 정규화를 하면 최고점이 항상 1.0 이 되어 '거부 임계값'이 무력화되므로,
@@ -58,7 +66,8 @@ BM25_SATURATION_K = 5.0
 # 이 값을 방식별로 따로 튜닝하지 않으면 3방식 비교가 무의미해진다
 # (한 방식에만 유리한 임계값으로 나머지를 재는 꼴이 된다).
 ABSTAIN_THRESHOLD = {
-    "bge":     {"dense": 0.56, "bm25": 0.47, "ensemble": 0.55},
+    # bge 값은 개발셋 스윕으로 확정 (`evaluate.py --compare`). alpha=0.8 기준.
+    "bge":     {"dense": 0.56, "bm25": 0.47, "ensemble": 0.56},
     "upstage": {"dense": 0.50, "bm25": 0.47, "ensemble": 0.45},   # 미측정. 스윕으로 확정할 것
     "openai":  {"dense": 0.38, "bm25": 0.47, "ensemble": 0.34},   # 미측정. 스윕으로 확정할 것
     "hash":    {"dense": 0.11, "bm25": 0.47, "ensemble": 0.20},

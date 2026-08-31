@@ -1,5 +1,6 @@
 """골든셋 자동 채점 + 검색 방식 3종 비교.
 
+  python eval/evaluate.py --alpha-scan           # 개발셋으로 앙상블 alpha 선택
   python eval/evaluate.py --compare              # dense/bm25/ensemble 비교 (LLM 비용 0)
   python eval/evaluate.py --sweep --mode dense   # 개발셋으로 임계값 튜닝, 홀드아웃으로 보고
   python eval/evaluate.py --retrieval-only       # 검색+거부만 채점
@@ -102,15 +103,39 @@ def judge(pre, mode, alpha, threshold=None, retrieval_only=True):
                   and all(k in text for k in case["must_include"]))
         rows.append({"id": case["id"], "kind": case["kind"], "expect": case["expect"],
                      "abstained": abstained, "top_doc": top_doc,
-                     "max_score": round(max_score, 4), "ok": ok})
+                     "max_score": round(max_score, 4), "ok": ok,
+                     "rr": reciprocal_rank(case, hits)})
     return rows
+
+
+def reciprocal_rank(case, hits) -> float | None:
+    """정답 문서가 검색 결과에서 몇 위였나의 역수. 없으면 0. 거부 문항은 None.
+
+    정답 판정(`top_doc in gold_doc_ids`)은 1위만 본다. 그래서 "정답이 2위였다"와
+    "아예 못 찾았다"가 똑같이 FAIL 로 찍혀 검색 실패를 진단할 수 없다.
+    MRR 은 그 둘을 0.5 와 0 으로 구분한다.
+
+    거부가 정답인 문항에는 정답 문서가 없으므로 계산 대상이 아니다.
+    거기까지 0 으로 세면 MRR 이 거부 정책에 오염된다.
+    """
+    if case["expect"] != "answer":
+        return None
+    gold = set(case["gold_doc_ids"])
+    for h in hits:
+        if h["doc_id"] in gold:
+            return 1.0 / h["rank"]
+    return 0.0
 
 
 def summarize(rows):
     ans = [r for r in rows if r["expect"] == "answer"]
     abs_ = [r for r in rows if r["expect"] == "abstain"]
     trap = [r for r in rows if r["kind"] == "trap"]
+    rr = [r["rr"] for r in rows if r["rr"] is not None]
     return {
+        "mrr": (sum(rr) / len(rr)) if rr else 0.0,
+        "mrr_n": len(rr),
+        "found": sum(1 for x in rr if x > 0),   # 정답 문서를 후보 안에서 찾기라도 한 건수
         "total": (sum(r["ok"] for r in rows), len(rows)),
         "answer": (sum(r["ok"] for r in ans), len(ans)),
         "abstain": (sum(r["ok"] for r in abs_), len(abs_)),
@@ -134,7 +159,55 @@ def report(rows, title=""):
     print(f"거부 정확도      : {pct(*s['abstain'])}   (답이 없을 때 거부한 비율)")
     print(f"함정 거부율      : {pct(*s['trap'])}   (함정 문항만)")
     print(f"오거부(과잉거부) : {pct(*s['false_abstain'])}   (답이 있는데 거부한 비율)")
+    print(f"MRR              : {s['mrr']:.3f}  (n={s['mrr_n']}, 정답 문서를 후보에서 찾은 건수 "
+          f"{s['found']}/{s['mrr_n']})")
+    print("                   MRR 은 거부 임계값과 무관하다. 순위 품질만 잰다.")
     return s
+
+
+def separation(pre) -> float:
+    """답변 가능 문항의 점수가 거부 문항의 점수보다 높은 (쌍) 비율. 0.5 면 무작위, 1.0 이면 완전 분리.
+
+    **임계값과 무관하다.** 어떤 임계값을 고르든 거부 레이어가 도달할 수 있는 성능의
+    상한을 나타내므로, 임계값을 고르기 전에 alpha 를 정하는 기준으로 쓸 수 있다.
+
+    MRR 로 alpha 를 고르려 했으나 이 데이터에서는 모든 alpha 에서 1.000 이었다.
+    답변 가능 문항의 정답 문서가 항상 1순위라 천장에 붙어 변별력이 없다.
+    검색 순위가 아니라 **거부 판정이 이 시스템의 병목**이므로 분리도가 맞는 기준이다.
+    """
+    pos = [ms for c, _h, ms, _b, _bk in pre if c["expect"] == "answer"]
+    neg = [ms for c, _h, ms, _b, _bk in pre if c["expect"] == "abstain"]
+    if not pos or not neg:
+        return 0.0
+    wins = sum(1 for p in pos for n in neg if p > n)
+    ties = sum(1 for p in pos for n in neg if p == n)
+    return (wins + 0.5 * ties) / (len(pos) * len(neg))
+
+
+def cmd_alpha_scan(cases, lo=0.0, hi=1.01, step=0.1):
+    """개발셋에서만 alpha 를 고른다. 홀드아웃은 건드리지 않는다.
+
+    홀드아웃 정답률을 보고 alpha 를 되고르면 그것은 더 이상 홀드아웃이 아니다.
+    """
+    dev, _ = split(cases)
+    print(f"\n앙상블 alpha 스캔 (개발셋 {len(dev)}문항, 홀드아웃 미사용)")
+    print(f"\n{'alpha':>6}{'MRR':>8}{'분리도':>9}")
+    print("-" * 24)
+    rows = []
+    for a in np.arange(lo, hi, step):
+        a = round(float(a), 2)
+        pre = precompute(dev, "ensemble", a)
+        s = summarize(judge(pre, "ensemble", a, 0.5))
+        sep = separation(pre)
+        rows.append((a, sep))
+        print(f"{a:>6.1f}{s['mrr']:>8.3f}{sep:>9.3f}")
+    best_sep = max(r[1] for r in rows)
+    # 동점이면 BM25 신호를 더 남기는 쪽(낮은 alpha)을 택한다.
+    # 조항 번호·부서명 같은 정확한 어휘 일치는 dense 가 놓칠 수 있다.
+    best_a = min(a for a, sep in rows if sep >= best_sep - 1e-9)
+    print(f"\n선택: alpha={best_a}  (분리도 {best_sep:.3f})")
+    print("동점 구간에서는 BM25 신호를 더 남기는 쪽(낮은 alpha)을 택한다.")
+    return best_a
 
 
 def tune(pre, mode, alpha, lo=0.02, hi=0.95, step=0.01):
@@ -181,12 +254,14 @@ def cmd_compare(cases, alpha):
         rows = judge(precompute(hold, mode, alpha), mode, alpha, thr)
         results[mode] = (thr, summarize(rows), rows)
 
-    head = f"{'방식':<10}{'임계값':>7}   {'정답률':^20} {'응답정확도':^20} {'함정거부':^20} {'오거부':^20}"
+    head = (f"{'방식':<10}{'임계값':>7}{'MRR':>8}   {'정답률':^20} {'응답정확도':^20} "
+            f"{'함정거부':^20} {'오거부':^20}")
     print(head)
     print("-" * len(head))
     for mode, (thr, s, _) in results.items():
-        print(f"{mode:<10}{thr:>7.2f}   {pct_short(*s['total'])} {pct_short(*s['answer'])} "
-              f"{pct_short(*s['trap'])} {pct_short(*s['false_abstain'])}")
+        print(f"{mode:<10}{thr:>7.2f}{s['mrr']:>8.3f}   {pct_short(*s['total'])} "
+              f"{pct_short(*s['answer'])} {pct_short(*s['trap'])} "
+              f"{pct_short(*s['false_abstain'])}")
     print("\n(표기: 맞은수/전체  비율 [95% 신뢰구간].  오거부는 낮을수록 좋다)")
 
     best = max(results, key=lambda m: results[m][1]["total"][0])
@@ -209,11 +284,14 @@ if __name__ == "__main__":
     p.add_argument("--retrieval-only", action="store_true")
     p.add_argument("--sweep", action="store_true")
     p.add_argument("--compare", action="store_true")
+    p.add_argument("--alpha-scan", action="store_true")
     p.add_argument("--mode", default=DEFAULT_MODE, choices=RETRIEVAL_MODES)
     p.add_argument("--alpha", type=float, default=ENSEMBLE_ALPHA)
     a = p.parse_args()
     cases = load_cases()
-    if a.compare:
+    if a.alpha_scan:
+        cmd_alpha_scan(cases)
+    elif a.compare:
         cmd_compare(cases, a.alpha)
     elif a.sweep:
         cmd_sweep(cases, a.mode, a.alpha)
