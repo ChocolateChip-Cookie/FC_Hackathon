@@ -1,0 +1,7 @@
+# Secrets and machine-local state (R18). .cursor/rules/ is deliberately tracked:
+# it is half of the shared handoff protocol.
+.claude/settings.local.json
+.claude/.credentials.json
+.claude/sessions/
+**/.credentials.json
+.evidence/
