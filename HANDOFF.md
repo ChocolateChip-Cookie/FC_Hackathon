@@ -78,6 +78,11 @@
 >   나쁨: `테스트 추가할 것` / 좋음: `parseConfig의 빈 입력 경로에 테스트가 없음. 다른 분기는 tests/config.spec.ts가 덮고 있음`
 >   명령형은 자기 근거를 숨겨서, 코드가 움직인 뒤에도 그 지시가 아직 유효한지 판단할 수 없다.
 
+### 2026-08-31 [CU] README 한 줄 설명
+- **한 일**: `README.md`에 리포 목적 한 줄 설명 추가 (순차 교대 협업, `HANDOFF.md` 인계)
+- **검증**: **[미검증]** 문서만 변경. 자동 테스트 대상 없음
+- **다음 것**: 프로젝트 주제와 스택이 미정 상태. `CLAUDE.md`의 빌드/테스트/린트 명령이 자리표시자로 비어 있음
+
 ### 2026-08-31 [CC] 인계 프로토콜 부트스트랩
 - **한 일**: 원격 클론, `HANDOFF.md` / `CLAUDE.md` / `.cursor/rules/handoff.mdc` / `.gitignore` 생성
 - **검증**: `git check-ignore -v .claude/.credentials.json .claude/settings.local.json .evidence/ledger.md` ->
