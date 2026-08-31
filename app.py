@@ -1,10 +1,12 @@
 """데모 UI:  streamlit run app.py
 
 데모 시나리오 (심사 3분):
- 1. 신입사원 역할로 "연차 신청은 며칠 전에?" -> 출처 인용된 답변
- 2. 역할 그대로 "과장 연봉 밴드는?"        -> 차단된 청크 수가 뜨면서 거부
- 3. 인사팀으로 전환 후 같은 질문            -> 답변됨
- 4. "회사 창립기념일은?"                   -> 근거 없음, 지어내지 않고 거부
+ 1. 역할=사원, 소속=개발본부. "연차 신청은 며칠 전에?" -> 출처 인용된 답변
+ 2. 같은 계정 "과장 연봉 밴드는?" -> 차단 청크 수가 뜨며 거부
+ 3. 소속만 인사기획팀으로 바꾼 뒤 같은 질문 -> 답변됨
+ 4. 소속=인사기획팀 그대로 "일일 출금 한도는?" -> 거부 (재무 대외비)
+ 5. 역할만 팀장으로, 소속=개발본부. "S등급 배분율" -> 답변됨 (직책 예외)
+ 6. "회사 창립기념일은?" -> 근거 없음, 지어내지 않고 거부
 
 화면 규칙은 DESIGN.md 를 따른다. 핵심 두 가지:
 - 액센트는 #0066cc 하나뿐이고, 상태색은 3px 좌측 바와 배지 밖으로 나가지 않는다.
@@ -18,11 +20,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
 
 import streamlit as st  # noqa: E402
 
-from config import (ABSTAIN_THRESHOLD, ENSEMBLE_ALPHA, ROLE_CLEARANCE,
-                    ROLE_LABEL)  # noqa: E402
+from config import (ABSTAIN_THRESHOLD, DEPARTMENTS, ENSEMBLE_ALPHA,  # noqa: E402
+                    POSITIONS, visible)
 from llm import NoLLMKey  # noqa: E402
 from providers import capabilities, mode_label  # noqa: E402
 from retriever import log_access, search, should_abstain  # noqa: E402
+from store import load  # noqa: E402
 
 st.set_page_config(page_title="사내 온보딩 어시스턴트", layout="wide")
 
@@ -70,8 +73,20 @@ cap = capabilities()
 # ---------- 사이드바 ----------
 with st.sidebar:
     st.header("접속 계정")
-    role = st.selectbox("역할", list(ROLE_LABEL), format_func=lambda r: ROLE_LABEL[r])
-    st.caption("열람 권한 등급: " + ", ".join(sorted(ROLE_CLEARANCE[role])))
+    position = st.selectbox(
+        "역할", POSITIONS,
+        help="직책 등급입니다. 인사평가 세칙처럼 팀장·본부장만 열리는 문서가 있습니다.")
+    dept = st.selectbox(
+        "소속", DEPARTMENTS,
+        help="부서입니다. 소관이 아니면 대외비와 부서 한정 문서는 검색 후보에서 빠집니다.")
+    user = {"dept": dept, "position": position}
+
+    ids, _docs, metas = load()
+    live = [m for m in metas if m.get("status", "active") == "active"]
+    n_vis = sum(1 for m in live if visible(m, user))
+    st.caption(
+        f"{dept} {position} · 열람 가능 조항 {n_vis}개 · "
+        f"권한으로 제외 {len(live) - n_vis}개")
 
     st.divider()
     st.header("검색 방식")
@@ -105,7 +120,7 @@ st.caption("On-premise 환경 기반 RAG 프로토타입")
 
 st.markdown(
     '<div class="demo-banner"><b>데모 버전입니다.</b> 등장하는 사내 규정은 전부 '
-    '<b>(가상) 주식회사 케이넥스</b>의 것으로, 시연을 위해 생성한 더미데이터입니다. '
+    '<b>(가상) 한성산업 주식회사</b>의 것으로, 시연을 위해 생성한 더미데이터입니다. '
     '실존 기업·인물과 무관합니다.</div>',
     unsafe_allow_html=True)
 
@@ -141,7 +156,8 @@ if query:
     st.chat_message("user").write(query)
     with st.chat_message("assistant"):
         with st.spinner("사내 문서 검색 중"):
-            hits, max_score, blocked, backend = search(query, role, mode, alpha)
+            hits, max_score, blocked, backend = search(
+                query, mode=mode, alpha=alpha, user=user)
 
         thr = ABSTAIN_THRESHOLD[backend][mode]
         abstained = (not hits) or should_abstain(max_score, backend, mode)
@@ -163,21 +179,21 @@ if query:
                 f'<span class="num">{max_score:.3f}</span> &lt; 임계값 '
                 f'<span class="num">{thr:.2f}</span> 이므로 답변을 만들지 않았습니다.</div>'
                 "</div>", unsafe_allow_html=True)
-            log_access(role, query, hits, True, blocked, mode)
+            log_access(user, query, hits, True, blocked, mode)
             if hits:
                 render_sources(hits)
 
         elif not cap["can_generate"]:
             # 생성 백엔드가 없다. 지어내지 않고 검색 결과만 낸다.
             st.markdown("".join(badges), unsafe_allow_html=True)
-            log_access(role, query, hits, False, blocked, mode)
+            log_access(user, query, hits, False, blocked, mode)
             render_sources(hits)
 
         else:
             try:
                 from answer import ask
                 with st.spinner("답변 작성 중"):
-                    res = ask(query, role, mode=mode, alpha=alpha)
+                    res = ask(query, user=user, mode=mode, alpha=alpha)
             except NoLLMKey as e:
                 st.error(str(e))
                 st.stop()

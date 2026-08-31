@@ -42,18 +42,20 @@
   **상위 제약은 `CLAUDE-hackathon-context.md`이며 `CLAUDE.md`가 이를 `@import` 한다.**
   배포하지 않는다. 깃헙에서 내려받아 로컬 실행하는 데모다
 - **브랜치**: `main`
+- **이 커밋**: 사규 26종 + 2차원 ACL + 골든셋 107 + UI 역할/소속 + BGE 인덱스(183청크). 구 더미는 `data/policies_legacy_v1/`, 구 골든셋은 `eval/golden_set_v1_legacy.json`
 - **진행중(미완)**:
-  1. 발표용 설명 자료 없음 (산출물 체크리스트 마지막 항)
-  2. `docs/onprem_architecture.md`가 `docs/onprem-design.md`와 중복이고 낡았다. 삭제 대상
-  3. 죽은 중복본 3건 미삭제: `CLAUDE (2).md`, 루트 `golden_set.json`, 루트 `onprem_architecture.md`
-  4. `eval/evaluate.py` 전체 모드(LLM 호출)를 골든셋으로 안 돌렸다. 2겹 효과의 정량 수치가 없다
-  5. Pretendard 웹폰트가 로드되지 않는다. CDN은 온프렘과 충돌
-  6. bge 외 임베딩 백엔드 임계값은 스윕으로 확정하지 않았다
+  1. 발표용 설명 자료 없음
+  2. 골든셋 전체 LLM 평가가 없다. Ollama `qwen2.5:7b` 전체 모드는 N01 출력 전에 사용자 요청으로 종료. `logs/`에 부분 결과 없음
+  3. Upstage 키는 `.env.local`에 있음. ingest/eval은 아직 안 돌림. BGE Chroma를 덮어쓰므로 평가와 동시에 돌리면 안 됨
+  4. Upstage 임베딩 임계값 스윕 없음. `ABSTAIN_THRESHOLD` upstage 값은 임시
+  5. Pretendard 웹폰트 미로드
+- **검증된 숫자 (발표에 hash 61%를 쓰지 말 것)**:
+  - BGE-M3 재색인: 26문서, 1 skipped (`searchable: false`), **183청크**
+  - `python eval/evaluate.py --retrieval-only` (ensemble): **92/107 (86%)**. 답해야 할 것 65/70, 거부 27/37, 함정 9/12, 오거부 1/70, MRR 0.976
 - **막힌 것 / 사람 결정 필요**:
-  - **"대기업/중견 수준 더미데이터"의 정의.** 양인지, 조직 복잡도인지, 문서 종류인지,
-    권한을 등급×부서 2차원으로 바꿀지. 답이 나오기 전에 문서를 늘리지 않는 편이 맞다
-  - Ollama 한국어 모델을 `qwen2.5:7b`로 둘지 비교 평가 없음
-- **작업 트리**: 이 커밋에 커서 세션 변경을 담는다. 죽은 중복본 3건은 커밋하지 않는다
+  - Ollama 전체 평가를 처음부터 다시 돌릴지, Upstage ingest부터 할지
+- **커밋하지 않는 것**: `.env.local`, `.claude/`, `.cursor/`, `DESIGN-apple.md`
+- **남겨 둔 프로세스**: Streamlit `:8501`은 끄지 않았다. Ollama 서버는 그대로. 평가 python만 종료
 
 ---
 
@@ -157,6 +159,22 @@
 >   나쁨: `테스트 추가할 것` / 좋음: `parseConfig의 빈 입력 경로에 테스트가 없음. 다른 분기는 tests/config.spec.ts가 덮고 있음`
 >   명령형은 자기 근거를 숨겨서, 코드가 움직인 뒤에도 그 지시가 아직 유효한지 판단할 수 없다.
 
+### 2026-08-31 [CU] Ollama 전체 평가 중단 + 세션 일시정지
+- **한 일**:
+  - 사규 26종 + 2차원 ACL + 골든셋 107은 워킹트리에 있음. 미커밋
+  - BGE 재색인 183청크, retrieval-only 92/107. Ollama 전체 평가는 N01 전에 사용자 요청으로 종료
+  - Upstage 키 `.env.local` 존재 확인 (값 미기록). ingest는 안 함
+  - 평가 python(PID 12712)만 종료. Chroma/`data/index`/Ollama 서버/Streamlit `:8501`은 그대로
+  - 사용자 요청으로 사규·ACL·골든셋·인덱스를 커밋. push는 안 함. `.env.local`과 에이전트 로컬 문서는 제외
+- **검증**:
+  - `Stop-Process` 후 `evaluate.py` 프로세스 0개. 터미널 exit `4294967295` (Windows 강제 종료)
+  - 평가 로그: `logs/` 비어 있음. 문항 채점 결과 없음
+  - retrieval-only: **92/107 (86%)**. 상세는 위 "현재 상태"
+- **다음 것**:
+  - 골든셋 LLM 전체 평가 수치가 없다. 2겹 효과는 미측정
+  - Upstage ingest는 BGE Chroma를 덮으므로 평가와 동시에 돌리면 안 되는 상태다
+  - 사규 이전·ACL·UI 변경은 이 커밋에 들어 있다. LLM 전체 평가 수치는 없다
+
 ### 2026-08-31 [CU] 충분성 JSON 흡수 + 출처 카드 수정 + 인계 갱신
 - **한 일**:
   - 2겹을 RAGFlow 형식(`ok` / `missing` / `use`) JSON으로 바꾸고, 불충분하면 거절로 닫음.
@@ -247,8 +265,3 @@
   왕복 테스트 결과 4개 기준 중 3개 통과, `현재 상태` 미갱신 1건은 문서 설계 결함으로 판정하고 위와 같이 수정
 - **다음 것**: 프로젝트 주제와 스택이 미정. `CLAUDE.md`의 빌드/테스트/린트 명령이 자리표시자로 비어 있음.
   감사 한 줄은 아직 실제로 위반을 잡아본 적이 없음(위반이 발생한 적이 없어서)
-
-### 2026-08-31 [CU] README 한 줄 설명
-- **한 일**: `README.md`에 리포 목적 한 줄 설명 추가 (순차 교대 협업, `HANDOFF.md` 인계)
-- **검증**: **[미검증]** 문서만 변경. 자동 테스트 대상 없음
-- **다음 것**: 프로젝트 주제와 스택이 미정 상태. `CLAUDE.md`의 빌드/테스트/린트 명령이 자리표시자로 비어 있음

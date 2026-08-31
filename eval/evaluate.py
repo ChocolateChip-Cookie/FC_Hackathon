@@ -162,6 +162,14 @@ def report(rows, title=""):
     print(f"MRR              : {s['mrr']:.3f}  (n={s['mrr_n']}, 정답 문서를 후보에서 찾은 건수 "
           f"{s['found']}/{s['mrr_n']})")
     print("                   MRR 은 거부 임계값과 무관하다. 순위 품질만 잰다.")
+    by_kind = {}
+    for r in rows:
+        by_kind.setdefault(r["kind"], []).append(r)
+    if len(by_kind) > 1:
+        print("유형별")
+        for k, rs in by_kind.items():
+            ok_n = sum(x["ok"] for x in rs)
+            print(f"  {k:<12}: {pct(ok_n, len(rs))}")
     return s
 
 

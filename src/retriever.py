@@ -15,7 +15,7 @@ import numpy as np
 
 import bm25 as bm25_mod
 from config import (ABSTAIN_THRESHOLD, DEFAULT_MODE, ENSEMBLE_ALPHA, LOG_PATH,
-                    ROLE_CLEARANCE, TOP_K)
+                    TOP_K, resolve_user, visible)
 from embeddings import backend_name, embed
 from store import dense_scores, load
 
@@ -36,22 +36,31 @@ def reset_cache():
     _bm25 = None
 
 
-def search(query: str, role: str, mode: str = DEFAULT_MODE,
-           alpha: float = ENSEMBLE_ALPHA, top_k: int = TOP_K):
-    """(hits, max_score, blocked, backend) 를 돌려준다. 점수는 방식과 무관하게 0~1."""
+def _is_live(meta):
+    return meta.get("status", "active") == "active"
+
+
+def search(query: str, role=None, mode: str = DEFAULT_MODE,
+           alpha: float = ENSEMBLE_ALPHA, top_k: int = TOP_K, user=None):
+    """(hits, max_score, blocked, backend) 를 돌려준다. 점수는 방식과 무관하게 0~1.
+
+    role 은 골든셋 키(dev, hr). user 는 UI 의 {dept, position}. 둘 중 하나.
+    """
     ids, docs, metas = load()
-    allowed = ROLE_CLEARANCE[role]
-    allow_idx = [i for i, m in enumerate(metas) if m["clearance"] in allowed]
-    blocked = len(ids) - len(allow_idx)
+    account = user if user is not None else resolve_user(role)
+    live_idx = [i for i, m in enumerate(metas) if _is_live(m)]
+    allow_idx = [i for i in live_idx if visible(metas[i], account)]
+    blocked = len(live_idx) - len(allow_idx)
     backend = backend_name()
     if not allow_idx:
         return [], 0.0, blocked, backend
 
     combined: dict[str, float] = {}
+    allowed_ids = [ids[i] for i in allow_idx]
 
     if mode in ("dense", "ensemble"):
         qv = embed([query], is_query=True)[0]
-        dense = dense_scores(qv, allowed, len(allow_idx))
+        dense = dense_scores(qv, allowed_ids, len(ids))
     if mode in ("bm25", "ensemble"):
         raw = bm25_mod.scores(_get_bm25(), query)
         lex = {ids[i]: float(raw[i]) for i in allow_idx}
@@ -85,8 +94,8 @@ def search(query: str, role: str, mode: str = DEFAULT_MODE,
     return hits, float(max(combined.values())), blocked, backend
 
 
-def search_multi(queries: list[str], role: str, mode: str = DEFAULT_MODE,
-                 alpha: float = ENSEMBLE_ALPHA, top_k: int = TOP_K):
+def search_multi(queries: list[str], role=None, mode: str = DEFAULT_MODE,
+                 alpha: float = ENSEMBLE_ALPHA, top_k: int = TOP_K, user=None):
     """멀티쿼리 검색. 여러 변형 질의의 결과를 청크별 최고점으로 합친다.
 
     합집합을 rank 로 융합(RRF)하지 않고 최고점을 쓰는 이유는 거부 레이어 때문이다.
@@ -94,12 +103,12 @@ def search_multi(queries: list[str], role: str, mode: str = DEFAULT_MODE,
     맞지 않은 질의에서도 최고점이 높게 나와 임계값 거부가 무력화된다.
     """
     if len(queries) == 1:
-        return search(queries[0], role, mode, alpha, top_k)
+        return search(queries[0], role, mode, alpha, top_k, user=user)
 
     best: dict[str, dict] = {}
     blocked = backend = None
     for q in queries:
-        hits, _, blocked, backend = search(q, role, mode, alpha, top_k)
+        hits, _, blocked, backend = search(q, role, mode, alpha, top_k, user=user)
         for h in hits:
             prev = best.get(h["chunk_id"])
             if prev is None or h["score"] > prev["score"]:
@@ -120,7 +129,7 @@ def should_abstain(max_score: float, backend: str, mode: str = DEFAULT_MODE) -> 
 def log_access(role, query, hits, abstained, blocked, mode=DEFAULT_MODE):
     rec = {
         "ts": datetime.now(timezone.utc).isoformat(),
-        "role": role,
+        "role": role if isinstance(role, str) else resolve_user(role)["label"],
         "query": query,
         "mode": mode,
         "abstained": abstained,

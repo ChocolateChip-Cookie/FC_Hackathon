@@ -32,34 +32,52 @@ def parse_doc(path):
     return meta, raw[m.end():]
 
 
+def _split_csv(value):
+    return [x.strip() for x in (value or "").split(",") if x.strip()]
+
+
 def chunk(meta, body):
     """'## ' 헤딩 단위로 자른다. 헤딩 자체를 본문에 남겨 검색 신호로 쓴다."""
     chunks = []
     parts = re.split(r"\n(?=## )", body.strip())
+    base = {
+        "doc_id": meta["doc_id"],
+        "title": meta["title"],
+        "clearance": meta["clearance"],
+        "version": meta.get("version", ""),
+        "effective_date": meta.get("effective_date", ""),
+        "owner": meta.get("owner", ""),
+        "category_l1": meta.get("category_l1", ""),
+        "category_l2": meta.get("category_l2", ""),
+        "norm_rank": int(meta.get("norm_rank", 5)),
+        "norm_type": meta.get("norm_type", ""),
+        "access_scope": meta.get("access_scope", "all"),
+        "access_depts": ", ".join(_split_csv(meta.get("access_depts", ""))),
+        "access_positions": ", ".join(_split_csv(meta.get("access_positions", ""))),
+        "status": meta.get("status", "active"),
+        "superseded_by": meta.get("superseded_by", ""),
+    }
     for part in parts:
         part = part.strip()
         if not part:
             continue
         heading = part.splitlines()[0].lstrip("# ").strip()
-        chunks.append({
-            "doc_id": meta["doc_id"],
-            "title": meta["title"],
-            "clearance": meta["clearance"],
-            "version": meta.get("version", ""),
-            "effective_date": meta.get("effective_date", ""),
-            "owner": meta.get("owner", ""),
-            "section": heading,
-            # 검색 대상 텍스트에 문서 제목을 붙여 문맥 손실을 줄인다
-            "text": f"[{meta['title']}] {part}",
-        })
+        item = dict(base)
+        item["section"] = heading
+        item["text"] = f"[{meta['title']}] {part}"
+        chunks.append(item)
     return chunks
 
 
 def build_index():
     all_chunks = []
+    skipped = 0
     docs = sorted(POLICY_DIR.glob("*.md"))
     for path in docs:
         meta, body = parse_doc(path)
+        if meta.get("searchable", "true").lower() == "false":
+            skipped += 1
+            continue
         all_chunks.extend(chunk(meta, body))
 
     # is_query=False: 문서 색인이다. solar-embedding 처럼 비대칭인 모델에서 -passage 를 쓴다.
@@ -77,7 +95,7 @@ def build_index():
         meta=np.array(json.dumps(all_chunks, ensure_ascii=False)),
         backend=np.array(backend),
     )
-    print(f"문서 {len(docs)}건 -> 청크 {len(all_chunks)}개, "
+    print(f"문서 {len(docs)}건 중 {skipped}건 제외 -> 청크 {len(all_chunks)}개, "
           f"차원 {vectors.shape[1]}, 백엔드 {backend}, chroma 적재 {n}건")
     print(f"사전 생성 인덱스: {out.relative_to(ROOT)} ({out.stat().st_size / 1024:.0f}KB)")
     return all_chunks

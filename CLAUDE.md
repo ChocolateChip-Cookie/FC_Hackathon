@@ -432,7 +432,6 @@ estimated_cost_usd, avg_retrieval_score, answer_length, cache_hit
   **프로젝트 전용 venv가 정답이다.**
 - **개인정보 마스킹은 코드에 없다.** `docs/onprem-design.md` §4.4에 설계만 있다.
   더미데이터에 주민번호·연락처 형식을 생성하지 않는 것으로 대체하고 있다.
-- **`docs/onprem_architecture.md`가 `docs/onprem-design.md`와 중복이다.** 삭제 대상.
 - Pretendard 웹폰트 미로드. 발표 자료 없음.
 
 ---

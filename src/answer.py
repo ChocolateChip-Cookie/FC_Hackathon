@@ -14,7 +14,7 @@
 import json
 import re
 
-from config import ABSTAIN_THRESHOLD, DEFAULT_MODE, ENSEMBLE_ALPHA
+from config import ABSTAIN_THRESHOLD, DEFAULT_MODE, ENSEMBLE_ALPHA, resolve_user
 from llm import complete
 from retriever import log_access, search, should_abstain
 
@@ -24,7 +24,7 @@ ABSTAIN_MSG = ("사내 규정 문서에서 근거를 찾지 못했습니다. "
 # CLAUDE.md §6. 블록을 생략하지 않는다. Examples 에 거부 예시가 없으면
 # 모델은 항상 답하려 든다. CoT 단계별 추론은 넣지 않는다 (§6.2).
 SYSTEM = """## Role
-당신은 (가상) 주식회사 케이넥스의 사내 규정 안내 어시스턴트입니다.
+당신은 (가상) 한성산업 주식회사의 사내 규정 안내 어시스턴트입니다.
 대상 독자는 신규 입사자입니다.
 
 ## Task
@@ -39,11 +39,12 @@ SYSTEM = """## Role
 - 일반 상식, 다른 회사 관행, 추측, "일반적으로는"을 쓰지 마십시오.
 - 근거만으로 답할 수 없거나 질문이 근거와 무관하면 ok 를 false 로 두십시오.
 - 근거에 없는 문서·부서·등급을 언급하지 마십시오.
+- 같은 사항에 근거가 둘이면 status 가 폐지된 쪽은 쓰지 말고, 그다음 norm_rank 숫자가 작은 쪽, 같으면 시행일이 늦은 쪽을 따르십시오.
 - JSON 이외의 텍스트를 출력하지 마십시오.
 
 ## Examples
 질문: 연차는 며칠 전에 신청하나요?
-{"ok": true, "use": [1], "missing": [], "answer": "사용 희망일 기준 3영업일 전까지 그룹웨어로 신청합니다. [휴가 및 근태 규정 / 제2조 (연차 사용 신청)] (시행일 2026-03-01)"}
+{"ok": true, "use": [1], "missing": [], "answer": "사용 희망일 기준 3영업일 전까지 KOS로 신청합니다. [휴가규정 / 제3조 (연차 사용 신청)] (시행일 2026-03-01)"}
 
 질문: 회사 창립기념일은 언제인가요?
 {"ok": false, "use": [], "missing": ["창립기념일"], "answer": ""}
@@ -170,10 +171,15 @@ def filter_useful(hits, ids):
     return kept or hits
 
 
-def ask(query: str, role: str, mode: str = DEFAULT_MODE, alpha: float = ENSEMBLE_ALPHA):
-    hits, max_score, blocked, backend = search(query, role, mode, alpha)
+def ask(query: str, role=None, mode: str = DEFAULT_MODE, alpha: float = ENSEMBLE_ALPHA,
+        user=None):
+    hits, max_score, blocked, backend = search(
+        query, role, mode, alpha, user=user)
 
-    result = {"query": query, "role": role, "hits": hits, "max_score": max_score,
+    account = user if user is not None else resolve_user(role)
+    ident = account["label"] if isinstance(account, dict) else str(account)
+
+    result = {"query": query, "role": ident, "hits": hits, "max_score": max_score,
               "blocked_chunks": blocked, "backend": backend, "mode": mode,
               "abstained": False, "reason": None, "unknown_citations": [],
               "missing": []}
@@ -183,7 +189,7 @@ def ask(query: str, role: str, mode: str = DEFAULT_MODE, alpha: float = ENSEMBLE
         result.update(abstained=True, answer=ABSTAIN_MSG,
                       reason=f"검색 최고 유사도 {max_score:.3f} < 임계값 "
                              f"{ABSTAIN_THRESHOLD[backend][mode]:.2f}")
-        log_access(role, query, hits, True, blocked, mode)
+        log_access(ident, query, hits, True, blocked, mode)
         return result
 
     # 2겹: 구조화 충분성. RAGFlow 와 같이 JSON 으로 판정하되, 불충분하면 거절로 닫는다.
@@ -201,7 +207,7 @@ def ask(query: str, role: str, mode: str = DEFAULT_MODE, alpha: float = ENSEMBLE
         if verdict["missing"]:
             why += ": " + ", ".join(verdict["missing"])
         result.update(abstained=True, answer=ABSTAIN_MSG, reason=why)
-        log_access(role, query, hits, True, blocked, mode)
+        log_access(ident, query, hits, True, blocked, mode)
         return result
 
     answer_text = verdict["answer"] or raw
@@ -213,10 +219,10 @@ def ask(query: str, role: str, mode: str = DEFAULT_MODE, alpha: float = ENSEMBLE
         result.update(abstained=True, answer=ABSTAIN_MSG,
                       reason="검색 결과에 없는 출처가 인용됨: " + ", ".join(unknown),
                       unknown_citations=unknown)
-        log_access(role, query, hits, True, blocked, mode)
+        log_access(ident, query, hits, True, blocked, mode)
         return result
 
     result["hits"] = filter_useful(hits, verdict["use"])
     result["answer"] = answer_text
-    log_access(role, query, result["hits"], False, blocked, mode)
+    log_access(ident, query, result["hits"], False, blocked, mode)
     return result

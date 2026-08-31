@@ -23,18 +23,82 @@ POLICY_DIR = ROOT / "data" / "policies"
 CHROMA_DIR = ROOT / "data" / "chroma"
 COLLECTION = "policies"
 # 제공자별 사전 생성 인덱스. 임베딩 공간이 다르면 색인과 질의가 어긋나므로
-# 백엔드마다 파일이 따로 있어야 한다. 32청크라 파일당 130~500KB 수준이고 커밋한다.
+# 백엔드마다 파일이 따로 있어야 한다. 183청크라 파일당 수 MB 수준이고 커밋한다.
 INDEX_DIR = ROOT / "data" / "index"
 LOG_PATH = ROOT / "data" / "access_log.jsonl"
 GOLDEN_SET = ROOT / "eval" / "golden_set.json"
 
-# 보안 모델: 사용자 역할 -> 열람 가능한 문서 등급
-ROLE_CLEARANCE = {
-    "intern": {"public"},                            # 신입/수습
-    "employee": {"public", "internal"},              # 일반 직원
-    "hr": {"public", "internal", "confidential"},    # 인사팀
+# 보안 모델 (2차원)
+#   축 1. clearance : 문서의 민감도 (public / internal / confidential)
+#   축 2. access    : 공유 범위 (전사 all / 특정 부서 dept + 직책 예외)
+# 두 축은 직교한다. 이 구조라야 "인사팀도 재무 대외비는 못 본다"와
+# "부서 한정 internal은 대외비가 아닌데도 막힌다"를 동시에 표현할 수 있다.
+# 판정은 visible() 하나뿐이다. 여기만 고치면 규칙 전체가 바뀐다.
+# 초기의 intern(신입) 역할은 제거했다. 재직 연차로 사규 열람을 막는 회사는 없다.
+# 골든셋·평가가 쓰는 이름 있는 페르소나. UI 는 아래 POSITIONS × DEPARTMENTS 조합이다.
+USERS = {
+    "dev":      {"label": "개발본부 사원", "dept": "개발본부",   "position": "사원"},
+    "dev_lead": {"label": "개발본부 팀장", "dept": "개발본부",   "position": "팀장"},
+    "hr":       {"label": "인사기획팀",    "dept": "인사기획팀", "position": "사원"},
+    "fin":      {"label": "재무팀",        "dept": "재무팀",     "position": "사원"},
+    "audit":    {"label": "감사팀",        "dept": "감사팀",     "position": "사원"},
 }
-ROLE_LABEL = {"intern": "신입사원", "employee": "일반 직원", "hr": "인사팀"}
+ROLE_LABEL = {k: v["label"] for k, v in USERS.items()}
+
+# UI 드롭다운. 직책은 문서 access_positions 와 같아야 하고,
+# 소속은 access_depts 에 등장하는 소관 + 시연용 개발본부를 포함한다.
+POSITIONS = ("사원", "팀장", "본부장")
+DEPARTMENTS = (
+    "개발본부",
+    "인사기획팀",
+    "재무팀",
+    "감사팀",
+    "IT지원팀",
+    "정보보안팀",
+    "안전보건팀",
+    "생산본부",
+    "지식재산팀",
+    "법무팀",
+)
+
+
+def _as_list(value):
+    if isinstance(value, list):
+        return [str(x).strip() for x in value if str(x).strip()]
+    if not value:
+        return []
+    return [x.strip() for x in str(value).split(",") if x.strip()]
+
+
+def resolve_user(role_or_user):
+    """역할 키(dev) 또는 {dept, position} 딕셔너리를 같은 형태로 맞춘다."""
+    if isinstance(role_or_user, dict):
+        dept = role_or_user["dept"]
+        position = role_or_user["position"]
+        return {
+            "dept": dept,
+            "position": position,
+            "label": role_or_user.get("label") or f"{dept} {position}",
+        }
+    return USERS[role_or_user]
+
+
+def visible(chunk, role_or_user):
+    """이 청크를 이 계정(소속×직책)이 열람할 수 있는가. 검색 후보를 만들 때만 쓴다.
+
+    status/searchable 은 여기서 보지 않는다. 폐지 문서와 메타 문서는 ingest 와
+    retriever 가 후보 집합에서 먼저 뺀다. 권한 규칙과 수명 규칙을 한 함수에 넣으면
+    반례가 권한 버그인지 폐지 버그인지 구분이 안 된다.
+    """
+    user = resolve_user(role_or_user)
+    clearance = chunk["clearance"]
+    if clearance == "public":
+        return True
+    if clearance == "internal" and chunk.get("access_scope", "all") == "all":
+        return True
+    if user["dept"] in _as_list(chunk.get("access_depts", [])):
+        return True
+    return user["position"] in _as_list(chunk.get("access_positions", []))
 
 TOP_K = 4
 

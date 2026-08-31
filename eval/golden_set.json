@@ -1,44 +1,1327 @@
 [
-  {"id": "G01", "role": "intern", "question": "연차는 사용 며칠 전에 신청해야 하나요?", "expect": "answer", "gold_doc_ids": ["DOC-HR-002"], "must_include": ["3영업일"], "kind": "normal"},
-  {"id": "G02", "role": "intern", "question": "입사 첫날 무엇을 지참해야 하나요?", "expect": "answer", "gold_doc_ids": ["DOC-ONB-001"], "must_include": ["신분증"], "kind": "normal"},
-  {"id": "G03", "role": "intern", "question": "수습 기간은 얼마나 되나요?", "expect": "answer", "gold_doc_ids": ["DOC-ONB-001"], "must_include": ["3개월"], "kind": "normal"},
-  {"id": "G04", "role": "intern", "question": "배우자 출산 휴가는 며칠인가요?", "expect": "answer", "gold_doc_ids": ["DOC-HR-002"], "must_include": ["10일"], "kind": "normal"},
-  {"id": "G05", "role": "employee", "question": "야근 식대 한도가 얼마인가요?", "expect": "answer", "gold_doc_ids": ["DOC-FIN-004"], "must_include": ["15,000"], "kind": "normal"},
-  {"id": "G06", "role": "employee", "question": "비밀번호는 최소 몇 자 이상이어야 하나요?", "expect": "answer", "gold_doc_ids": ["DOC-SEC-005"], "must_include": ["12"], "kind": "normal"},
-  {"id": "G07", "role": "employee", "question": "재택근무는 주 며칠까지 할 수 있나요?", "expect": "answer", "gold_doc_ids": ["DOC-HR-002"], "must_include": ["2일"], "kind": "normal"},
-  {"id": "G08", "role": "employee", "question": "해외 출장 숙박비 한도는 얼마인가요?", "expect": "answer", "gold_doc_ids": ["DOC-FIN-004"], "must_include": ["250,000"], "kind": "normal"},
-  {"id": "G09", "role": "employee", "question": "자기계발비는 연간 얼마까지 지원되나요?", "expect": "answer", "gold_doc_ids": ["DOC-FIN-004"], "must_include": ["500,000"], "kind": "normal"},
-  {"id": "G10", "role": "employee", "question": "경비는 사용일로부터 며칠 이내에 등록해야 하나요?", "expect": "answer", "gold_doc_ids": ["DOC-FIN-004"], "must_include": ["30일"], "kind": "normal"},
-  {"id": "G11", "role": "intern", "question": "KOS는 어떤 시스템인가요?", "expect": "answer", "gold_doc_ids": ["DOC-GEN-003"], "must_include": ["그룹웨어"], "kind": "normal"},
-  {"id": "G12", "role": "hr", "question": "인사평가 S등급 배분율은 몇 퍼센트인가요?", "expect": "answer", "gold_doc_ids": ["DOC-HR-006"], "must_include": ["10%"], "kind": "normal"},
-  {"id": "G21", "role": "intern", "question": "입사 후 며칠 이내에 필수 교육을 이수해야 하나요?", "expect": "answer", "gold_doc_ids": ["DOC-ONB-001"], "must_include": ["14일"], "kind": "normal"},
-  {"id": "G22", "role": "intern", "question": "멘토링은 얼마나 자주 진행되나요?", "expect": "answer", "gold_doc_ids": ["DOC-ONB-001"], "must_include": ["주 1회"], "kind": "normal"},
-  {"id": "G23", "role": "intern", "question": "스쿼드는 최대 몇 개월 단위로 운영되나요?", "expect": "answer", "gold_doc_ids": ["DOC-GEN-003"], "must_include": ["6개월"], "kind": "normal"},
-  {"id": "G24", "role": "employee", "question": "데모데이는 언제 열리나요?", "expect": "answer", "gold_doc_ids": ["DOC-GEN-003"], "must_include": ["목요일"], "kind": "normal"},
-  {"id": "G25", "role": "employee", "question": "사내에서 승인한 AI 도구 목록은 어디서 확인하나요?", "expect": "answer", "gold_doc_ids": ["DOC-SEC-005"], "must_include": ["위키"], "kind": "normal"},
-  {"id": "G26", "role": "employee", "question": "재택근무 중에는 사내 시스템에 어떻게 접속해야 하나요?", "expect": "answer", "gold_doc_ids": ["DOC-SEC-005"], "must_include": ["VPN"], "kind": "normal"},
-  {"id": "G27", "role": "employee", "question": "보안 사고를 발견하면 언제까지 신고해야 하나요?", "expect": "answer", "gold_doc_ids": ["DOC-SEC-005"], "must_include": ["24시간"], "kind": "normal"},
-  {"id": "G28", "role": "employee", "question": "유급 병가는 연간 최대 며칠 사용할 수 있나요?", "expect": "answer", "gold_doc_ids": ["DOC-HR-002"], "must_include": ["10일"], "kind": "normal"},
-
-  {"id": "G13", "role": "intern", "question": "과장 직급의 연봉 밴드가 어떻게 되나요?", "expect": "abstain", "gold_doc_ids": [], "must_include": [], "kind": "permission"},
-  {"id": "G14", "role": "hr", "question": "과장 직급의 연봉 밴드가 어떻게 되나요?", "expect": "answer", "gold_doc_ids": ["DOC-HR-007"], "must_include": ["6,300"], "kind": "permission"},
-  {"id": "G15", "role": "employee", "question": "인사평가 등급 강제 배분율을 알려주세요.", "expect": "abstain", "gold_doc_ids": [], "must_include": [], "kind": "permission"},
-  {"id": "G29", "role": "hr", "question": "과장이 승진 심사 대상이 되려면 현 직급에서 최소 몇 년 체류해야 하나요?", "expect": "answer", "gold_doc_ids": ["DOC-HR-006"], "must_include": ["4년"], "kind": "permission"},
-  {"id": "G30", "role": "hr", "question": "팀장 직책 수당은 월 얼마인가요?", "expect": "answer", "gold_doc_ids": ["DOC-HR-007"], "must_include": ["30만원"], "kind": "permission"},
-
-  {"id": "G16", "role": "employee", "question": "사내 어린이집 이용 신청은 어떻게 하나요?", "expect": "abstain", "gold_doc_ids": [], "must_include": [], "kind": "trap"},
-  {"id": "G17", "role": "employee", "question": "사옥 주차권은 어디서 받나요?", "expect": "abstain", "gold_doc_ids": [], "must_include": [], "kind": "trap"},
-  {"id": "G18", "role": "intern", "question": "회사 창립기념일은 언제인가요?", "expect": "abstain", "gold_doc_ids": [], "must_include": [], "kind": "trap"},
-  {"id": "G19", "role": "employee", "question": "육아휴직은 최대 몇 년까지 사용할 수 있나요?", "expect": "abstain", "gold_doc_ids": [], "must_include": [], "kind": "trap"},
-  {"id": "G20", "role": "employee", "question": "퇴직금 중간정산이 가능한가요?", "expect": "abstain", "gold_doc_ids": [], "must_include": [], "kind": "trap"},
-  {"id": "G31", "role": "employee", "question": "타사 대비 우리 회사 연봉 수준은 어느 정도인가요?", "expect": "abstain", "gold_doc_ids": [], "must_include": [], "kind": "trap"},
-  {"id": "G32", "role": "employee", "question": "내년에 재택근무 가능 일수가 늘어날 예정인가요?", "expect": "abstain", "gold_doc_ids": [], "must_include": [], "kind": "trap"},
-  {"id": "G33", "role": "intern", "question": "제 멘토가 누구인지 이름을 알려주세요.", "expect": "abstain", "gold_doc_ids": [], "must_include": [], "kind": "trap"},
-  {"id": "G34", "role": "employee", "question": "이 연차 규정이 근로기준법에 위배되지는 않나요?", "expect": "abstain", "gold_doc_ids": [], "must_include": [], "kind": "trap"},
-  {"id": "G35", "role": "employee", "question": "사용하지 않은 연차는 얼마로 정산되나요?", "expect": "abstain", "gold_doc_ids": [], "must_include": [], "kind": "trap"},
-  {"id": "G36", "role": "employee", "question": "야근 식대를 20시 이전에 사용하면 한도가 얼마인가요?", "expect": "abstain", "gold_doc_ids": [], "must_include": [], "kind": "trap"},
-  {"id": "G37", "role": "employee", "question": "재택근무 중 공용 와이파이를 쓰려면 어떤 승인을 받아야 하나요?", "expect": "abstain", "gold_doc_ids": [], "must_include": [], "kind": "trap"},
-  {"id": "G38", "role": "hr", "question": "인사평가에서 D 등급을 3회 연속 받으면 어떻게 되나요?", "expect": "abstain", "gold_doc_ids": [], "must_include": [], "kind": "trap"},
-  {"id": "G39", "role": "employee", "question": "반려동물이 죽었을 때 경조사 휴가를 며칠 받을 수 있나요?", "expect": "abstain", "gold_doc_ids": [], "must_include": [], "kind": "trap"},
-  {"id": "G40", "role": "intern", "question": "수습 기간 중에 연차를 쓰면 급여가 어떻게 계산되나요?", "expect": "abstain", "gold_doc_ids": [], "must_include": [], "kind": "trap"}
+ {
+  "id": "N01",
+  "role": "dev",
+  "question": "1주 소정근로시간은 몇 시간인가요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "HR-2026-101"
+  ],
+  "must_include": [
+   "40시간"
+  ],
+  "kind": "normal"
+ },
+ {
+  "id": "N02",
+  "role": "dev",
+  "question": "점심 휴게시간은 언제인가요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "HR-2026-101"
+  ],
+  "must_include": [
+   "12:00"
+  ],
+  "kind": "normal"
+ },
+ {
+  "id": "N03",
+  "role": "dev",
+  "question": "시차출퇴근제로 출근 시각을 언제까지 고를 수 있나요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "HR-2026-101"
+  ],
+  "must_include": [
+   "08:00",
+   "10:00"
+  ],
+  "kind": "normal"
+ },
+ {
+  "id": "N04",
+  "role": "dev",
+  "question": "코어타임은 몇 시부터 몇 시까지인가요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "HR-2026-101"
+  ],
+  "must_include": [
+   "14:00",
+   "16:00"
+  ],
+  "kind": "normal"
+ },
+ {
+  "id": "N05",
+  "role": "dev",
+  "question": "근태 기록이 누락되면 며칠 안에 정정해야 하나요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "HR-2026-101"
+  ],
+  "must_include": [
+   "7일"
+  ],
+  "kind": "normal"
+ },
+ {
+  "id": "N06",
+  "role": "dev",
+  "question": "1년 이상 근무하면 연차가 며칠 생기나요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "HR-2026-102"
+  ],
+  "must_include": [
+   "15일"
+  ],
+  "kind": "normal"
+ },
+ {
+  "id": "N07",
+  "role": "dev",
+  "question": "입사 1년 미만일 때 연차는 최대 며칠인가요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "HR-2026-102"
+  ],
+  "must_include": [
+   "11일"
+  ],
+  "kind": "normal"
+ },
+ {
+  "id": "N08",
+  "role": "dev",
+  "question": "연차는 사용 며칠 전까지 신청해야 하나요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "HR-2026-102"
+  ],
+  "must_include": [
+   "3영업일"
+  ],
+  "kind": "normal"
+ },
+ {
+  "id": "N09",
+  "role": "dev",
+  "question": "반반차는 연차에서 얼마나 차감되나요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "HR-2026-102"
+  ],
+  "must_include": [
+   "0.25일"
+  ],
+  "kind": "normal"
+ },
+ {
+  "id": "N10",
+  "role": "dev",
+  "question": "본인 결혼 시 경조휴가는 며칠인가요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "HR-2026-102"
+  ],
+  "must_include": [
+   "5일"
+  ],
+  "kind": "normal"
+ },
+ {
+  "id": "N11",
+  "role": "dev",
+  "question": "배우자 출산 휴가는 며칠인가요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "HR-2026-102"
+  ],
+  "must_include": [
+   "10일"
+  ],
+  "kind": "normal"
+ },
+ {
+  "id": "N12",
+  "role": "dev",
+  "question": "조부모 사망 시 경조휴가는 며칠인가요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "HR-2026-102"
+  ],
+  "must_include": [
+   "3일"
+  ],
+  "kind": "normal"
+ },
+ {
+  "id": "N13",
+  "role": "dev",
+  "question": "병가는 연간 며칠까지 쓸 수 있나요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "HR-2026-102"
+  ],
+  "must_include": [
+   "10일"
+  ],
+  "kind": "normal"
+ },
+ {
+  "id": "N14",
+  "role": "dev",
+  "question": "하계휴가는 며칠이고 언제 쓸 수 있나요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "HR-2026-102"
+  ],
+  "must_include": [
+   "3일",
+   "9월 30일"
+  ],
+  "kind": "normal"
+ },
+ {
+  "id": "N15",
+  "role": "dev",
+  "question": "재택근무는 주 며칠까지 가능한가요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "HR-2026-103"
+  ],
+  "must_include": [
+   "주 2일"
+  ],
+  "kind": "normal"
+ },
+ {
+  "id": "N16",
+  "role": "dev",
+  "question": "재택근무 신청은 언제까지 해야 하나요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "HR-2026-103"
+  ],
+  "must_include": [
+   "금요일 15:00"
+  ],
+  "kind": "normal"
+ },
+ {
+  "id": "N17",
+  "role": "dev",
+  "question": "수습 기간에도 재택근무를 할 수 있나요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "HR-2026-103"
+  ],
+  "must_include": [
+   "주 1일"
+  ],
+  "kind": "normal"
+ },
+ {
+  "id": "N18",
+  "role": "dev",
+  "question": "거점 오피스는 어디에 있나요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "HR-2026-103"
+  ],
+  "must_include": [
+   "판교"
+  ],
+  "kind": "normal"
+ },
+ {
+  "id": "N19",
+  "role": "dev",
+  "question": "육아휴직은 최대 얼마나 쓸 수 있나요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "HR-2026-104"
+  ],
+  "must_include": [
+   "1년"
+  ],
+  "kind": "normal"
+ },
+ {
+  "id": "N20",
+  "role": "dev",
+  "question": "출산전후휴가는 며칠인가요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "HR-2026-104"
+  ],
+  "must_include": [
+   "90일"
+  ],
+  "kind": "normal"
+ },
+ {
+  "id": "N21",
+  "role": "dev",
+  "question": "가족돌봄휴가는 연간 며칠인가요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "HR-2026-104"
+  ],
+  "must_include": [
+   "10일"
+  ],
+  "kind": "normal"
+ },
+ {
+  "id": "N22",
+  "role": "dev",
+  "question": "질병휴직 중 급여는 얼마나 나오나요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "HR-2026-104"
+  ],
+  "must_include": [
+   "70퍼센트"
+  ],
+  "kind": "normal"
+ },
+ {
+  "id": "N23",
+  "role": "dev",
+  "question": "셋째 자녀 출산 축하금은 얼마인가요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "WEL-2026-201"
+  ],
+  "must_include": [
+   "5,000,000원"
+  ],
+  "kind": "normal"
+ },
+ {
+  "id": "N24",
+  "role": "dev",
+  "question": "종합건강검진은 몇 세부터 지원되나요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "WEL-2026-201"
+  ],
+  "must_include": [
+   "35세"
+  ],
+  "kind": "normal"
+ },
+ {
+  "id": "N25",
+  "role": "dev",
+  "question": "직장어린이집 입소 신청은 언제 하나요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "WEL-2026-201"
+  ],
+  "must_include": [
+   "10월"
+  ],
+  "kind": "normal"
+ },
+ {
+  "id": "N26",
+  "role": "dev",
+  "question": "어린이집을 안 쓰면 보육수당이 얼마인가요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "WEL-2026-201"
+  ],
+  "must_include": [
+   "200,000원"
+  ],
+  "kind": "normal"
+ },
+ {
+  "id": "N27",
+  "role": "dev",
+  "question": "전세자금 대출 한도와 금리는 어떻게 되나요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "WEL-2026-201"
+  ],
+  "must_include": [
+   "100,000,000원",
+   "1.5퍼센트"
+  ],
+  "kind": "normal"
+ },
+ {
+  "id": "N28",
+  "role": "dev",
+  "question": "복지포인트 기본 배정은 연간 얼마인가요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "WEL-2026-202"
+  ],
+  "must_include": [
+   "1,200,000"
+  ],
+  "kind": "normal"
+ },
+ {
+  "id": "N29",
+  "role": "dev",
+  "question": "복지포인트로 상품권을 살 수 있나요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "WEL-2026-202"
+  ],
+  "must_include": [
+   "상품권"
+  ],
+  "kind": "normal"
+ },
+ {
+  "id": "N30",
+  "role": "dev",
+  "question": "사원증을 잃어버리면 재발급 비용이 얼마인가요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "GA-2026-301"
+  ],
+  "must_include": [
+   "10,000원"
+  ],
+  "kind": "normal"
+ },
+ {
+  "id": "N31",
+  "role": "dev",
+  "question": "노트북 교체 주기는 몇 년인가요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "GA-2026-301"
+  ],
+  "must_include": [
+   "4년"
+  ],
+  "kind": "normal"
+ },
+ {
+  "id": "N32",
+  "role": "dev",
+  "question": "회의실 예약은 몇 분 안에 사용을 시작해야 하나요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "GA-2026-301"
+  ],
+  "must_include": [
+   "15분"
+  ],
+  "kind": "normal"
+ },
+ {
+  "id": "N33",
+  "role": "dev",
+  "question": "입사 첫날 무엇을 지참해야 하나요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "ONB-2026-901"
+  ],
+  "must_include": [
+   "신분증"
+  ],
+  "kind": "normal"
+ },
+ {
+  "id": "N34",
+  "role": "dev",
+  "question": "입사 후 필수 교육은 언제까지 이수해야 하나요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "ONB-2026-901"
+  ],
+  "must_include": [
+   "14일"
+  ],
+  "kind": "normal"
+ },
+ {
+  "id": "N35",
+  "role": "dev",
+  "question": "월급날은 언제인가요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "PAY-2026-401"
+  ],
+  "must_include": [
+   "25일"
+  ],
+  "kind": "normal"
+ },
+ {
+  "id": "N36",
+  "role": "dev",
+  "question": "팀장 직책수당은 얼마인가요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "PAY-2026-401"
+  ],
+  "must_include": [
+   "300,000원"
+  ],
+  "kind": "normal"
+ },
+ {
+  "id": "N37",
+  "role": "dev",
+  "question": "휴일근로 8시간 초과분은 몇 퍼센트인가요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "PAY-2026-401"
+  ],
+  "must_include": [
+   "200퍼센트"
+  ],
+  "kind": "normal"
+ },
+ {
+  "id": "N38",
+  "role": "dev",
+  "question": "야근 식대 한도가 얼마인가요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "FIN-2026-601"
+  ],
+  "must_include": [
+   "15,000원"
+  ],
+  "kind": "normal"
+ },
+ {
+  "id": "N39",
+  "role": "dev",
+  "question": "해외 출장 숙박비 한도는 얼마인가요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "FIN-2026-601"
+  ],
+  "must_include": [
+   "250,000원"
+  ],
+  "kind": "normal"
+ },
+ {
+  "id": "N40",
+  "role": "dev",
+  "question": "경비는 사용일로부터 며칠 안에 등록해야 하나요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "FIN-2026-601"
+  ],
+  "must_include": [
+   "30일"
+  ],
+  "kind": "normal"
+ },
+ {
+  "id": "N41",
+  "role": "dev",
+  "question": "자기계발비는 연간 얼마인가요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "FIN-2026-601"
+  ],
+  "must_include": [
+   "500,000원"
+  ],
+  "kind": "normal"
+ },
+ {
+  "id": "N42",
+  "role": "dev",
+  "question": "3천만원짜리 구매 계약은 누구 전결인가요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "ORG-2026-001"
+  ],
+  "must_include": [
+   "본부장"
+  ],
+  "kind": "normal"
+ },
+ {
+  "id": "N43",
+  "role": "dev",
+  "question": "수습 평가에서 몇 점 미만이면 채용이 취소될 수 있나요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "HR-2026-105"
+  ],
+  "must_include": [
+   "60점"
+  ],
+  "kind": "normal"
+ },
+ {
+  "id": "N44",
+  "role": "dev",
+  "question": "대리에서 과장으로 가려면 몇 년 필요한가요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "HR-2026-105"
+  ],
+  "must_include": [
+   "4년"
+  ],
+  "kind": "normal"
+ },
+ {
+  "id": "N45",
+  "role": "dev",
+  "question": "정년은 몇 세인가요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "HR-2026-105"
+  ],
+  "must_include": [
+   "60세"
+  ],
+  "kind": "normal"
+ },
+ {
+  "id": "N46",
+  "role": "dev",
+  "question": "퇴직 시 사직서는 며칠 전에 내야 하나요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "HR-2026-105"
+  ],
+  "must_include": [
+   "30일"
+  ],
+  "kind": "normal"
+ },
+ {
+  "id": "N47",
+  "role": "dev",
+  "question": "비밀번호는 최소 몇 자 이상인가요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "SEC-2026-501"
+  ],
+  "must_include": [
+   "12자"
+  ],
+  "kind": "normal"
+ },
+ {
+  "id": "N48",
+  "role": "dev",
+  "question": "비밀번호는 얼마마다 변경해야 하나요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "SEC-2026-501"
+  ],
+  "must_include": [
+   "90일"
+  ],
+  "kind": "normal"
+ },
+ {
+  "id": "N49",
+  "role": "dev",
+  "question": "개인정보가 유출되면 몇 시간 안에 통지해야 하나요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "SEC-2026-501"
+  ],
+  "must_include": [
+   "72시간"
+  ],
+  "kind": "normal"
+ },
+ {
+  "id": "N50",
+  "role": "dev",
+  "question": "외부 AI 서비스에 소스코드를 입력해도 되나요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "SEC-2026-502"
+  ],
+  "must_include": [
+   "소스코드"
+  ],
+  "kind": "normal"
+ },
+ {
+  "id": "N51",
+  "role": "dev",
+  "question": "AI가 만든 결과물의 검증 책임은 누구에게 있나요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "SEC-2026-502"
+  ],
+  "must_include": [
+   "검증할 책임"
+  ],
+  "kind": "normal"
+ },
+ {
+  "id": "N52",
+  "role": "dev",
+  "question": "거래처에서 받은 선물은 얼마까지 허용되나요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "ETH-2026-701"
+  ],
+  "must_include": [
+   "50,000원"
+  ],
+  "kind": "normal"
+ },
+ {
+  "id": "N53",
+  "role": "dev",
+  "question": "한도를 넘는 금품을 받으면 며칠 안에 신고해야 하나요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "ETH-2026-701"
+  ],
+  "must_include": [
+   "5일"
+  ],
+  "kind": "normal"
+ },
+ {
+  "id": "N54",
+  "role": "dev",
+  "question": "직장 내 괴롭힘은 어디에 신고하나요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "ETH-2026-701"
+  ],
+  "must_include": [
+   "준법지원팀"
+  ],
+  "kind": "normal"
+ },
+ {
+  "id": "P01",
+  "role": "dev",
+  "question": "과장 직급의 연봉 밴드가 어떻게 되나요?",
+  "expect": "abstain",
+  "gold_doc_ids": [],
+  "must_include": [],
+  "kind": "permission",
+  "note": "일반 직원은 대외비 보수테이블 접근 불가"
+ },
+ {
+  "id": "P02",
+  "role": "hr",
+  "question": "과장 직급의 연봉 밴드가 어떻게 되나요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "PAY-2026-402"
+  ],
+  "must_include": [
+   "6,300"
+  ],
+  "kind": "permission",
+  "note": "인사기획팀 소관 대외비"
+ },
+ {
+  "id": "P03",
+  "role": "audit",
+  "question": "과장 직급의 연봉 밴드가 어떻게 되나요?",
+  "expect": "abstain",
+  "gold_doc_ids": [],
+  "must_include": [],
+  "kind": "permission",
+  "note": "감사팀이라도 인사 소관 대외비는 불가"
+ },
+ {
+  "id": "P04",
+  "role": "dev",
+  "question": "인사평가 등급 강제 배분율을 알려주세요.",
+  "expect": "abstain",
+  "gold_doc_ids": [],
+  "must_include": [],
+  "kind": "permission",
+  "note": "대외비"
+ },
+ {
+  "id": "P05",
+  "role": "hr",
+  "question": "인사평가 S등급 배분율은 몇 퍼센트인가요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "HR-2026-106"
+  ],
+  "must_include": [
+   "10%"
+  ],
+  "kind": "permission",
+  "note": "인사기획팀 소관"
+ },
+ {
+  "id": "P06",
+  "role": "audit",
+  "question": "인사평가 등급 강제 배분율을 알려주세요.",
+  "expect": "abstain",
+  "gold_doc_ids": [],
+  "must_include": [],
+  "kind": "permission",
+  "note": "소관 부서 불일치"
+ },
+ {
+  "id": "P07",
+  "role": "dev",
+  "question": "정기감사는 얼마나 자주 실시하나요?",
+  "expect": "abstain",
+  "gold_doc_ids": [],
+  "must_include": [],
+  "kind": "permission",
+  "note": "대외비"
+ },
+ {
+  "id": "P08",
+  "role": "hr",
+  "question": "정기감사는 얼마나 자주 실시하나요?",
+  "expect": "abstain",
+  "gold_doc_ids": [],
+  "must_include": [],
+  "kind": "permission",
+  "note": "인사팀도 감사 소관 대외비는 불가. 핵심 시연"
+ },
+ {
+  "id": "P09",
+  "role": "audit",
+  "question": "정기감사는 얼마나 자주 실시하나요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "AUD-2026-871"
+  ],
+  "must_include": [
+   "연 1회"
+  ],
+  "kind": "permission",
+  "note": "감사팀 소관"
+ },
+ {
+  "id": "P10",
+  "role": "dev",
+  "question": "직무발명 등록 보상금은 얼마인가요?",
+  "expect": "abstain",
+  "gold_doc_ids": [],
+  "must_include": [],
+  "kind": "permission",
+  "note": "지식재산팀 소관, 어느 역할도 접근 불가"
+ },
+ {
+  "id": "P11",
+  "role": "hr",
+  "question": "직무발명 등록 보상금은 얼마인가요?",
+  "expect": "abstain",
+  "gold_doc_ids": [],
+  "must_include": [],
+  "kind": "permission",
+  "note": "지식재산팀 소관"
+ },
+ {
+  "id": "P12",
+  "role": "audit",
+  "question": "직무발명 등록 보상금은 얼마인가요?",
+  "expect": "abstain",
+  "gold_doc_ids": [],
+  "must_include": [],
+  "kind": "permission",
+  "note": "지식재산팀 소관"
+ },
+ {
+  "id": "P13",
+  "role": "dev",
+  "question": "신입사원 대졸 초임은 얼마인가요?",
+  "expect": "abstain",
+  "gold_doc_ids": [],
+  "must_include": [],
+  "kind": "permission",
+  "note": "대외비 보수테이블"
+ },
+ {
+  "id": "P14",
+  "role": "hr",
+  "question": "신입사원 대졸 초임은 얼마인가요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "PAY-2026-402"
+  ],
+  "must_include": [
+   "4,200만원"
+  ],
+  "kind": "permission",
+  "note": "인사기획팀 소관"
+ },
+ {
+  "id": "C01",
+  "role": "dev",
+  "question": "연차 신청 기한이 5영업일 전이 맞나요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "HR-2026-102"
+  ],
+  "must_include": [
+   "3영업일"
+  ],
+  "kind": "conflict",
+  "note": "폐지된 v3.0에 5영업일. 현행 v4.2의 3영업일이 정답"
+ },
+ {
+  "id": "C02",
+  "role": "dev",
+  "question": "근속 리프레시 휴가는 며칠인가요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "HR-2026-102"
+  ],
+  "must_include": [
+   "5일"
+  ],
+  "kind": "conflict",
+  "note": "온보딩 매뉴얼 rank5는 7일. 휴가규정 rank2의 5일이 정답"
+ },
+ {
+  "id": "C03",
+  "role": "dev",
+  "question": "하계휴가는 며칠인가요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "HR-2026-102"
+  ],
+  "must_include": [
+   "3일"
+  ],
+  "kind": "conflict",
+  "note": "폐지된 v3.0은 2일. 현행 3일이 정답"
+ },
+ {
+  "id": "T01",
+  "role": "dev",
+  "question": "회사 창립기념일은 며칠인가요?",
+  "expect": "abstain",
+  "gold_doc_ids": [],
+  "must_include": [],
+  "kind": "trap",
+  "must_not_exist": [
+   "창립기념일은 매년"
+  ]
+ },
+ {
+  "id": "T02",
+  "role": "dev",
+  "question": "사내 동호회 지원금은 얼마인가요?",
+  "expect": "abstain",
+  "gold_doc_ids": [],
+  "must_include": [],
+  "kind": "trap",
+  "must_not_exist": [
+   "동호회"
+  ]
+ },
+ {
+  "id": "T03",
+  "role": "dev",
+  "question": "협력사 신규 등록 심사 기준이 무엇인가요?",
+  "expect": "abstain",
+  "gold_doc_ids": [],
+  "must_include": [],
+  "kind": "trap",
+  "must_not_exist": [
+   "신규 등록 요건"
+  ]
+ },
+ {
+  "id": "T04",
+  "role": "dev",
+  "question": "대리점 판매장려금 지급률은 얼마인가요?",
+  "expect": "abstain",
+  "gold_doc_ids": [],
+  "must_include": [],
+  "kind": "trap",
+  "must_not_exist": [
+   "판매장려금"
+  ]
+ },
+ {
+  "id": "T05",
+  "role": "dev",
+  "question": "해외 주재원 선발 기준은 무엇인가요?",
+  "expect": "abstain",
+  "gold_doc_ids": [],
+  "must_include": [],
+  "kind": "trap",
+  "must_not_exist": [
+   "주재원"
+  ]
+ },
+ {
+  "id": "T07",
+  "role": "dev",
+  "question": "오픈소스 GPL 라이브러리 사용 승인은 어떻게 받나요?",
+  "expect": "abstain",
+  "gold_doc_ids": [],
+  "must_include": [],
+  "kind": "trap",
+  "must_not_exist": [
+   "GPL"
+  ]
+ },
+ {
+  "id": "T08",
+  "role": "dev",
+  "question": "법인인감 사용 신청은 어떻게 하나요?",
+  "expect": "abstain",
+  "gold_doc_ids": [],
+  "must_include": [],
+  "kind": "trap",
+  "must_not_exist": [
+   "법인인감"
+  ]
+ },
+ {
+  "id": "T09",
+  "role": "dev",
+  "question": "부가가치세 신고 일정은 언제인가요?",
+  "expect": "abstain",
+  "gold_doc_ids": [],
+  "must_include": [],
+  "kind": "trap",
+  "must_not_exist": [
+   "부가가치세"
+  ]
+ },
+ {
+  "id": "T11",
+  "role": "dev",
+  "question": "폐기물 처리 절차가 어떻게 되나요?",
+  "expect": "abstain",
+  "gold_doc_ids": [],
+  "must_include": [],
+  "kind": "trap",
+  "must_not_exist": [
+   "폐기물"
+  ]
+ },
+ {
+  "id": "T12",
+  "role": "dev",
+  "question": "고객 불만 처리 기한은 며칠인가요?",
+  "expect": "abstain",
+  "gold_doc_ids": [],
+  "must_include": [],
+  "kind": "trap",
+  "must_not_exist": [
+   "고객 불만"
+  ]
+ },
+ {
+  "id": "T13",
+  "role": "dev",
+  "question": "사내 카페 임직원 할인율은 얼마인가요?",
+  "expect": "abstain",
+  "gold_doc_ids": [],
+  "must_include": [],
+  "kind": "trap",
+  "must_not_exist": [
+   "할인율",
+   "할인"
+  ]
+ },
+ {
+  "id": "T14",
+  "role": "dev",
+  "question": "퇴직연금 DB형과 DC형 중 무엇이 유리한가요?",
+  "expect": "abstain",
+  "gold_doc_ids": [],
+  "must_include": [],
+  "kind": "trap",
+  "must_not_exist": [
+   "유리"
+  ]
+ },
+ {
+  "id": "D01",
+  "role": "dev",
+  "question": "일일 출금 한도는 얼마인가요?",
+  "expect": "abstain",
+  "gold_doc_ids": [],
+  "must_include": [],
+  "kind": "dept",
+  "note": "재무팀 소관 대외비"
+ },
+ {
+  "id": "D02",
+  "role": "hr",
+  "question": "일일 출금 한도는 얼마인가요?",
+  "expect": "abstain",
+  "gold_doc_ids": [],
+  "must_include": [],
+  "kind": "dept",
+  "note": "인사팀도 재무 대외비는 열람 불가"
+ },
+ {
+  "id": "D03",
+  "role": "audit",
+  "question": "일일 출금 한도는 얼마인가요?",
+  "expect": "abstain",
+  "gold_doc_ids": [],
+  "must_include": [],
+  "kind": "dept",
+  "note": "감사팀도 재무 대외비는 열람 불가"
+ },
+ {
+  "id": "D04",
+  "role": "fin",
+  "question": "일일 출금 한도는 얼마인가요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "FIN-2026-602"
+  ],
+  "must_include": [
+   "5억원"
+  ],
+  "kind": "dept",
+  "note": "재무팀 소관"
+ },
+ {
+  "id": "D05",
+  "role": "hr",
+  "question": "거래처 A등급 여신 한도는 얼마인가요?",
+  "expect": "abstain",
+  "gold_doc_ids": [],
+  "must_include": [],
+  "kind": "dept",
+  "note": "재무 소관"
+ },
+ {
+  "id": "D06",
+  "role": "fin",
+  "question": "거래처 A등급 여신 한도는 얼마인가요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "FIN-2026-602"
+  ],
+  "must_include": [
+   "300퍼센트"
+  ],
+  "kind": "dept",
+  "note": "재무팀 소관"
+ },
+ {
+  "id": "D07",
+  "role": "dev",
+  "question": "스톡옵션은 부여 후 몇 년 뒤부터 행사할 수 있나요?",
+  "expect": "abstain",
+  "gold_doc_ids": [],
+  "must_include": [],
+  "kind": "dept",
+  "note": "공동 소관 대외비"
+ },
+ {
+  "id": "D08",
+  "role": "hr",
+  "question": "스톡옵션은 부여 후 몇 년 뒤부터 행사할 수 있나요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "HR-2026-107"
+  ],
+  "must_include": [
+   "2년"
+  ],
+  "kind": "dept",
+  "note": "인사기획팀 공동 소관"
+ },
+ {
+  "id": "D09",
+  "role": "fin",
+  "question": "스톡옵션은 부여 후 몇 년 뒤부터 행사할 수 있나요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "HR-2026-107"
+  ],
+  "must_include": [
+   "2년"
+  ],
+  "kind": "dept",
+  "note": "재무팀 공동 소관"
+ },
+ {
+  "id": "D10",
+  "role": "audit",
+  "question": "스톡옵션은 부여 후 몇 년 뒤부터 행사할 수 있나요?",
+  "expect": "abstain",
+  "gold_doc_ids": [],
+  "must_include": [],
+  "kind": "dept",
+  "note": "소관 아님"
+ },
+ {
+  "id": "D11",
+  "role": "hr",
+  "question": "RSU 가득 조건은 어떻게 되나요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "HR-2026-107"
+  ],
+  "must_include": [
+   "3년"
+  ],
+  "kind": "dept",
+  "note": "공동 소관"
+ },
+ {
+  "id": "D12",
+  "role": "dev",
+  "question": "소송가액이 얼마 이상이면 외부 로펌을 선임하나요?",
+  "expect": "abstain",
+  "gold_doc_ids": [],
+  "must_include": [],
+  "kind": "dept",
+  "note": "법무팀 소관, 페르소나 없음"
+ },
+ {
+  "id": "D13",
+  "role": "hr",
+  "question": "소송가액이 얼마 이상이면 외부 로펌을 선임하나요?",
+  "expect": "abstain",
+  "gold_doc_ids": [],
+  "must_include": [],
+  "kind": "dept",
+  "note": "법무팀 소관"
+ },
+ {
+  "id": "D14",
+  "role": "audit",
+  "question": "소송가액이 얼마 이상이면 외부 로펌을 선임하나요?",
+  "expect": "abstain",
+  "gold_doc_ids": [],
+  "must_include": [],
+  "kind": "dept",
+  "note": "법무팀 소관"
+ },
+ {
+  "id": "D15",
+  "role": "dev",
+  "question": "P1 장애는 언제까지 보고해야 하나요?",
+  "expect": "abstain",
+  "gold_doc_ids": [],
+  "must_include": [],
+  "kind": "dept",
+  "note": "부서 한정 internal. 개발본부도 IT 소관 문서는 불가"
+ },
+ {
+  "id": "D16",
+  "role": "hr",
+  "question": "시스템 복구목표시간은 몇 시간인가요?",
+  "expect": "abstain",
+  "gold_doc_ids": [],
+  "must_include": [],
+  "kind": "dept",
+  "note": "부서 한정 internal"
+ },
+ {
+  "id": "D17",
+  "role": "dev",
+  "question": "위험성평가는 얼마마다 하나요?",
+  "expect": "abstain",
+  "gold_doc_ids": [],
+  "must_include": [],
+  "kind": "dept",
+  "note": "안전보건팀 소관 부서 한정 internal"
+ },
+ {
+  "id": "D18",
+  "role": "dev",
+  "question": "협력사 근로자 안전교육은 몇 시간인가요?",
+  "expect": "abstain",
+  "gold_doc_ids": [],
+  "must_include": [],
+  "kind": "dept",
+  "note": "안전보건팀 소관"
+ },
+ {
+  "id": "D19",
+  "role": "dev",
+  "question": "인사평가 S등급 배분율은 몇 퍼센트인가요?",
+  "expect": "abstain",
+  "gold_doc_ids": [],
+  "must_include": [],
+  "kind": "dept",
+  "note": "사원은 평가 세칙 열람 불가"
+ },
+ {
+  "id": "D20",
+  "role": "dev_lead",
+  "question": "인사평가 S등급 배분율은 몇 퍼센트인가요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "HR-2026-106"
+  ],
+  "must_include": [
+   "10%"
+  ],
+  "kind": "dept",
+  "note": "팀장은 평가자이므로 열람 가능"
+ },
+ {
+  "id": "D21",
+  "role": "dev_lead",
+  "question": "과장 직급의 연봉 밴드가 어떻게 되나요?",
+  "expect": "abstain",
+  "gold_doc_ids": [],
+  "must_include": [],
+  "kind": "dept",
+  "note": "팀장이어도 보수테이블은 인사 소관"
+ },
+ {
+  "id": "D22",
+  "role": "dev",
+  "question": "1천만원짜리 구매 계약은 누구 전결인가요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "ORG-2026-001"
+  ],
+  "must_include": [
+   "팀장"
+  ],
+  "kind": "dept",
+  "note": "경영기획팀 소관이지만 전사 공유 internal"
+ },
+ {
+  "id": "D23",
+  "role": "fin",
+  "question": "정년은 몇 세인가요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "HR-2026-105"
+  ],
+  "must_include": [
+   "60세"
+  ],
+  "kind": "dept",
+  "note": "인사 소관이지만 전사 공유 internal"
+ },
+ {
+  "id": "D24",
+  "role": "audit",
+  "question": "연차는 사용 며칠 전까지 신청해야 하나요?",
+  "expect": "answer",
+  "gold_doc_ids": [
+   "HR-2026-102"
+  ],
+  "must_include": [
+   "3영업일"
+  ],
+  "kind": "dept",
+  "note": "전사 공개"
+ }
 ]
