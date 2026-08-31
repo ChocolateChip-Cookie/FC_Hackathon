@@ -41,21 +41,21 @@
 - **목표**: AX 해커톤 주제 01 / Case 1, 사내 온보딩 RAG 챗봇.
   **상위 제약은 `CLAUDE-hackathon-context.md`이며 `CLAUDE.md`가 이를 `@import` 한다.**
   배포하지 않는다. 깃헙에서 내려받아 로컬 실행하는 데모다
-- **브랜치**: `main`
-- **이 커밋**: 사규 26종 + 2차원 ACL + 골든셋 107 + UI 역할/소속 + BGE 인덱스(183청크). 구 더미는 `data/policies_legacy_v1/`, 구 골든셋은 `eval/golden_set_v1_legacy.json`
+- **브랜치**: `main` (로컬 `6ebe03c`, origin 보다 1커밋 앞. push 안 함)
 - **진행중(미완)**:
   1. 발표용 설명 자료 없음
-  2. 골든셋 전체 LLM 평가가 없다. Ollama `qwen2.5:7b` 전체 모드는 N01 출력 전에 사용자 요청으로 종료. `logs/`에 부분 결과 없음
-  3. Upstage 키는 `.env.local`에 있음. ingest/eval은 아직 안 돌림. BGE Chroma를 덮어쓰므로 평가와 동시에 돌리면 안 됨
-  4. Upstage 임베딩 임계값 스윕 없음. `ABSTAIN_THRESHOLD` upstage 값은 임시
-  5. Pretendard 웹폰트 미로드
+  2. BGE 임계값 0.56은 구 40문항 기준. 107문항으로 다시 스윕하지 않음
+  3. OpenAI 임베딩 임계값 미측정
+  4. Pretendard 웹폰트 미로드
 - **검증된 숫자 (발표에 hash 61%를 쓰지 말 것)**:
-  - BGE-M3 재색인: 26문서, 1 skipped (`searchable: false`), **183청크**
-  - `python eval/evaluate.py --retrieval-only` (ensemble): **92/107 (86%)**. 답해야 할 것 65/70, 거부 27/37, 함정 9/12, 오거부 1/70, MRR 0.976
-- **막힌 것 / 사람 결정 필요**:
-  - Ollama 전체 평가를 처음부터 다시 돌릴지, Upstage ingest부터 할지
-- **커밋하지 않는 것**: `.env.local`, `.claude/`, `.cursor/`, `DESIGN-apple.md`
-- **남겨 둔 프로세스**: Streamlit `:8501`은 끄지 않았다. Ollama 서버는 그대로. 평가 python만 종료
+  - 권한 bm25 전수: live 179 × 5 = 895조합, 반례 0. 개발사원 125 / 팀장 131 / 인사 143 / 재무 138 / 감사 131
+  - BGE retrieval-only: **92/107 (86%)**
+  - BGE + Ollama `qwen2.5:7b`: **93/107 (87%)**
+  - Upstage `--compare` 홀드아웃: dense 50/53, ensemble 49/53 (임계값 0.46), bm25 41/53. 신뢰구간 겹침
+  - Upstage retrieval-only (스윕 전 0.45): **97/107 (91%)**
+  - Upstage + `solar-pro`: **100/107 (93%)**. 거부 37/37, 함정 12/12, 권한 14/14, 충돌 3/3
+- **Chroma**: BGE 183청크로 복원함 (`restore_from_prebuilt('bge')`). `data/index/upstage.npz` 도 커밋됨
+- **워킹트리**: 이 커밋으로 측정 경로(429 재시도, upstage 임계값, README, 인덱스)를 정리. push는 안 함
 
 ---
 
@@ -147,6 +147,14 @@
   의존성이 아니다. 깨끗한 venv에서는 충돌이 없다
 - **버린 것**: `streamlit<1.57` 핀 (심사위원이 버전을 못 고른다)
 
+### 2026-08-31 - Upstage 임계값은 홀드아웃 스윕, 429는 재시도만
+- **정한 것**: upstage `ABSTAIN_THRESHOLD` dense 0.40 / bm25 0.69 / ensemble 0.46.
+  HTTP 429만 embeddings·llm 에서 최대 6회 백오프
+- **왜**: 107문항 개발 54 / 홀드아웃 53, `--compare`. 발표 숫자는 홀드아웃.
+  검색 채점 직후 전체 평가가 429로 한 번 죽었고, 키 문제가 아니라 속도 제한이었다
+- **버린 것**: 전체 107로 임계값을 다시 고르기 (그러면 홀드아웃이 아님).
+  401을 재시도하기 (잘못된 키를 반복 호출하는 꼴)
+
 ---
 
 ## 세션 로그 (최근 5개, 오래된 건 삭제)
@@ -158,6 +166,42 @@
 > - "다음 것"은 명령형이 아니라 **상태 서술형**으로 쓴다.
 >   나쁨: `테스트 추가할 것` / 좋음: `parseConfig의 빈 입력 경로에 테스트가 없음. 다른 분기는 tests/config.spec.ts가 덮고 있음`
 >   명령형은 자기 근거를 숨겨서, 코드가 움직인 뒤에도 그 지시가 아직 유효한지 판단할 수 없다.
+
+### 2026-08-31 [CU] Upstage 스윕 + BGE Chroma 복원 + README 수치
+- **한 일**:
+  - `--compare`로 upstage 임계값 확정 (ensemble 0.46). 권한 bm25 895조합 반례 0
+  - Chroma 를 BGE 183청크로 복원. README 를 107문항·2차원 권한 숫자로 교체
+- **검증**:
+  - `evaluate.py --compare` EMBED=upstage -> 홀드아웃 dense 50/53, ensemble 49/53, bm25 41/53
+  - `permission_matrix.py bm25` -> 반례 0건, 허용 125/131/143/138/131
+  - `restore_from_prebuilt('bge')` -> chroma count 183
+- **다음 것**:
+  - 발표 자료가 없다. OpenAI 임계값과 BGE 107문항 재스윕은 없다
+
+### 2026-08-31 [CU] Upstage 재색인 + 검색/전체 평가
+- **한 일**:
+  - 새 키로 ingest. 183청크, 4096차원, `data/index/upstage.npz`
+  - retrieval-only 후 전체 평가. 첫 전체 평가는 429로 실패, cooldown + 429 backoff 후 재실행
+- **검증**:
+  - `python src/ingest.py` EMBED=upstage -> 청크 183, chroma 183
+  - `--retrieval-only` -> **97/107 (91%)**
+  - `eval/evaluate.py` GEN=upstage -> **100/107 (93%)**, 거부 37/37, 함정 12/12, 권한 14/14, 충돌 3/3
+- **다음 것**:
+  - Upstage 임계값 0.45 는 스윕하지 않은 임시값이다
+  - Chroma 가 Upstage 라 온프렘 시연은 BGE npz 를 다시 올려야 하는 상태다
+  - 429 재시도와 `upstage.npz` 가 미커밋이다
+
+### 2026-08-31 [CU] Ollama 전체 평가 완료, Upstage 401로 중단
+- **한 일**:
+  - BGE + Ollama `qwen2.5:7b` 골든셋 전체 평가 완료 (~50분)
+  - Upstage ingest 시도. embed 첫 배치에서 HTTP 401 `invalid_api_key`. Chroma 미변경
+  - Streamlit `:8501` 은 ingest 잠금 때문에 종료
+- **검증**:
+  - `python -u eval/evaluate.py` (EMBED=bge, GEN=ollama) exit 0 -> **93/107 (87%)**, 응답 57/70, 거부 36/37, 함정 11/12, 오거부 4/70, MRR 0.976, 권한 14/14
+  - `python src/ingest.py` EMBED=upstage -> 401. chroma_count 183 유지
+- **다음 것**:
+  - Upstage 키가 콘솔에서 invalid. 새 키가 없으면 ingest/retrieval/전체평가 경로가 닫혀 있다
+  - `eval/evaluate.py` 문항별 `llm...` 진행 로그는 워킹트리에만 있음 (미커밋)
 
 ### 2026-08-31 [CU] Ollama 전체 평가 중단 + 세션 일시정지
 - **한 일**:
@@ -226,42 +270,3 @@
   - MRR 1.000은 **검색 순위가 병목이 아니라는 뜻**이다. 개선 여지는 전부 거부 레이어에 있다
   - alpha 0.5가 홀드아웃에서 1문항 높았으나(16 vs 15) 홀드아웃으로 되고르지 않았다.
     잡음 범위이고, 되고르면 홀드아웃이 아니게 된다
-
-### 2026-08-31 [CC] RAG 서비스 구축 + 해커톤 컨텍스트 고정
-- **한 일**:
-  - 골든셋 20 -> **40문항**(normal 20 / trap 15 / permission 5). 함정을 5 -> 15로 늘린 것이 핵심
-  - 검색 3방식(dense / BM25 / ensemble) + ChromaDB + BGE-M3 로컬 임베딩 + kiwipiepy BM25
-  - `eval/evaluate.py`: Wilson 신뢰구간 병기, 개발셋/홀드아웃 분리 스윕, `--compare` 3방식 비교
-  - `eval/permission_matrix.py` 신규: 권한 96조합 **전수 검사**
-  - `src/providers.py` 신규: 가진 키로 무엇이 가능한지 판정하는 능력 매트릭스
-  - `.env.local` 지원(의존성 0), Upstage/Ollama 백엔드, 제공자별 사전 생성 인덱스(`data/index/bge.npz`)
-  - `CLAUDE-hackathon-context.md`를 `@import`로 고정 + 커서용 `alwaysApply` 규칙 신규
-  - `CLAUDE.md` §2를 온프렘/클라우드 2모드로 개정, FAISS -> ChromaDB 정정
-  - 더미 사규 7종 front matter에 **가상 회사 표기**(컨텍스트 §4 명시 요구였는데 누락돼 있었음)
-- **검증**:
-  - `python eval/permission_matrix.py bm25` 및 `dense` -> 각각 **96조합 반례 0건**,
-    intern 19 / employee 9 / hr 0 차단으로 등급 분포(public 13, internal 10, confidential 9)와 일치
-  - `python eval/evaluate.py --compare` -> 홀드아웃 19문항에서
-    dense 14/19, bm25 14/19, **ensemble 16/19**. 세 방식 신뢰구간이 겹쳐 우열 단정 불가
-  - `python src/providers.py` -> 키 조합 4종 자체 점검 통과
-    (앤트로픽만 -> bm25 전용 / 키 0개 -> bm25 전용 / upstage·openai -> 3방식)
-  - `git check-ignore -v .env.local` -> `.gitignore:9` 매치
-  - front matter 변경 후 재색인 -> **32청크 유지**, 권한 전수 검사 재통과
-  - **[미검증]** LLM 생성 경로. 키 3종 전부 없고 Ollama 미설치라 `src/answer.py`·`src/llm.py`는
-    한 번도 실행되지 않았다. 출처 표기·인용 검증·인젝션 방어 전부 미검증
-- **다음 것**:
-  - `docs/onprem-design.md`가 절 제목만 있고 내용이 0이다. 컨텍스트 §2의 **필수 산출물 (B)**이라
-    현재 가장 큰 구멍이다
-  - `app.py`가 `providers.py`를 import하지 않는다. 데모 배너·모드 표시·방식 제한이 화면에 없어서
-    `CLAUDE.md` §2.4("몰래 늘리지 않는다")가 코드에만 있고 사용자에겐 안 보인다
-  - `ENSEMBLE_ALPHA = 0.5`에 근거가 없다. MRR 지표가 없어 alpha를 임계값과 분리해 고를 수단이 없다
-  - 개인정보 마스킹·질의 로그 취급 방침이 코드에도 문서에도 없다
-
-### 2026-08-31 [CC] 왕복 테스트 검증 + 프로토콜 결함 2건 수정
-- **한 일**: 커서 세션(`a94a972`) 검증. `현재 상태`에서 쓸 수 없는 `HEAD` 필드 삭제,
-  프로토콜 1단계에 직전 세션 감사 한 줄 추가
-- **검증**: `git log --oneline -3` -> `a94a972 [CU] ...` / `git fetch && git log --oneline -1 origin/main`
-  -> `a94a972` (push 반영 확인) / `git show --stat HEAD` -> `HANDOFF.md`, `README.md` 2파일 동일 커밋 확인.
-  왕복 테스트 결과 4개 기준 중 3개 통과, `현재 상태` 미갱신 1건은 문서 설계 결함으로 판정하고 위와 같이 수정
-- **다음 것**: 프로젝트 주제와 스택이 미정. `CLAUDE.md`의 빌드/테스트/린트 명령이 자리표시자로 비어 있음.
-  감사 한 줄은 아직 실제로 위반을 잡아본 적이 없음(위반이 발생한 적이 없어서)

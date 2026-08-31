@@ -14,6 +14,8 @@ import hashlib
 import json
 import math
 import os
+import time
+import urllib.error
 import urllib.request
 
 import numpy as np
@@ -72,8 +74,21 @@ def _api_embed(texts: list[str], backend: str, is_query: bool) -> np.ndarray:
         data=json.dumps({"model": model, "input": texts}).encode(),
         headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
     )
-    with urllib.request.urlopen(req, timeout=60) as r:
-        body = json.loads(r.read())
+    last_err = None
+    for attempt in range(6):
+        try:
+            with urllib.request.urlopen(req, timeout=60) as r:
+                body = json.loads(r.read())
+            break
+        except urllib.error.HTTPError as e:
+            last_err = e
+            if e.code != 429 or attempt == 5:
+                raise
+            wait = min(60, 2 ** (attempt + 1))
+            print(f"embed 429, {wait}s 후 재시도 ({attempt + 1}/6)", flush=True)
+            time.sleep(wait)
+    else:
+        raise last_err
     # 응답 순서가 입력 순서와 다를 수 있으므로 index 로 정렬한다.
     rows = sorted(body["data"], key=lambda d: d["index"])
     arr = np.array([d["embedding"] for d in rows], dtype=np.float32)

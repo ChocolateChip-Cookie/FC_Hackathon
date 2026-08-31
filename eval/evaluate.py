@@ -88,11 +88,14 @@ def judge(pre, mode, alpha, threshold=None, retrieval_only=True):
         if retrieval_only:
             text = " ".join(h["text"] for h in hits)
         elif abstained:
+            print(f"{case['id']} skip-llm (1겹 거부 {max_score:.3f})", flush=True)
             text = ""
         else:
             from answer import ask
+            print(f"{case['id']} llm...", flush=True)
             res = ask(case["question"], case["role"], mode=mode, alpha=alpha)
             abstained, text = res["abstained"], res.get("answer", "")
+            print(f"{case['id']} done abstain={abstained}", flush=True)
 
         top_doc = hits[0]["doc_id"] if hits else None
         if case["expect"] == "abstain":

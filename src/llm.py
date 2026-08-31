@@ -7,6 +7,8 @@ Upstage 와 OpenAI 는 OpenAI 호환이라 같은 경로를 쓴다.
 """
 import json
 import os
+import time
+import urllib.error
 import urllib.request
 
 from config import (CHAT_MODEL_ANTHROPIC, CHAT_MODEL_OLLAMA, CHAT_MODEL_OPENAI,
@@ -22,8 +24,19 @@ def _post(url, payload, headers, timeout=120):
     req = urllib.request.Request(
         url, data=json.dumps(payload).encode(),
         headers={"Content-Type": "application/json", **headers})
-    with urllib.request.urlopen(req, timeout=timeout) as r:
-        return json.loads(r.read())
+    last_err = None
+    for attempt in range(6):
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as r:
+                return json.loads(r.read())
+        except urllib.error.HTTPError as e:
+            last_err = e
+            if e.code != 429 or attempt == 5:
+                raise
+            wait = min(60, 2 ** (attempt + 1))
+            print(f"llm 429, {wait}s 후 재시도 ({attempt + 1}/6)", flush=True)
+            time.sleep(wait)
+    raise last_err
 
 
 def _openai_compatible(base_url, key, model, system, user, max_tokens):

@@ -132,7 +132,8 @@ BM25_SATURATION_K = 5.0
 ABSTAIN_THRESHOLD = {
     # bge 값은 개발셋 스윕으로 확정 (`evaluate.py --compare`). alpha=0.8 기준.
     "bge":     {"dense": 0.56, "bm25": 0.47, "ensemble": 0.56},
-    "upstage": {"dense": 0.50, "bm25": 0.47, "ensemble": 0.45},   # 미측정. 스윕으로 확정할 것
+    # upstage 107문항 골든셋, 개발 54 / 홀드아웃 53, alpha=0.8 (`evaluate.py --compare`).
+    "upstage": {"dense": 0.40, "bm25": 0.69, "ensemble": 0.46},
     "openai":  {"dense": 0.38, "bm25": 0.47, "ensemble": 0.34},   # 미측정. 스윕으로 확정할 것
     "hash":    {"dense": 0.11, "bm25": 0.47, "ensemble": 0.20},
     "none":    {"dense": 0.00, "bm25": 0.47, "ensemble": 0.00},   # 임베딩 키 없음. bm25 만 유효
@@ -152,7 +153,7 @@ EMBED_API = {
         "key_env": "UPSTAGE_API_KEY",
         "passage": "solar-embedding-1-large-passage",
         "query": "solar-embedding-1-large-query",
-        "dim": 2048,
+        "dim": 4096,
     },
     "openai": {
         "base_url": "https://api.openai.com/v1",
