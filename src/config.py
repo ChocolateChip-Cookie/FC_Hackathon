@@ -102,6 +102,11 @@ EMBED_API = {
 # 생성 백엔드. 우선순위는 providers.py 가 정한다 (온프렘이 먼저).
 OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
 CHAT_MODEL_OLLAMA = os.environ.get("OLLAMA_MODEL", "qwen2.5:7b")
+# GPU 레이어 수. 비워두면 Ollama 가 알아서 정한다(기본).
+# 0 으로 두면 CPU 전용. GPU 드라이버와 CUDA 커널이 안 맞는 환경에서 필요하다
+# (증상: llama-server 가 "CUDA error: device kernel image is invalid" 로 죽고 HTTP 500).
+# 이것은 특정 머신의 환경 문제이므로 코드에 CPU 를 강제하지 않고 .env.local 로 넘긴다.
+OLLAMA_NUM_GPU = os.environ.get("OLLAMA_NUM_GPU")
 CHAT_MODEL_ANTHROPIC = "claude-sonnet-4-5"
 CHAT_MODEL_OPENAI = "gpt-4o-mini"
 CHAT_MODEL_UPSTAGE = "solar-pro"

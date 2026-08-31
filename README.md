@@ -19,8 +19,18 @@ AX 실무 해커톤 **주제 01**: On-premise 환경 기반 RAG 서비스 구축
 3. **측정** - 골든셋 40문항으로 정답률·오거부율·함정 거부율을 **신뢰구간과 함께** 냅니다.
 
 대형 RAG 프레임워크 4종(RAGFlow · Dify · LangChain · Langflow)의 소스를 대조한 결과,
-1번은 저희만의 것이 아닙니다(RAGFlow가 더 정교합니다). 2번과 3번이 실제로 희소합니다.
-근거는 [`CLAUDE.md`](CLAUDE.md) §1.1에 있습니다.
+거부를 *하는 것*은 저희만의 것이 아닙니다. RAGFlow 에이전틱 경로는 구조화 충분성 JSON
+(`is_sufficient` / `missing_information` / `useful_chunk_ids`)과 질의 재작성 루프를 갖고 있습니다.
+저희는 그 JSON 형식을 생성 호출 안에 흡수했고, 세 지점에서 다르게 닫습니다.
+
+- **LLM 전에 거절한다.** 튜닝된 유사도 임계값(1겹)으로 호출 자체를 생략합니다. RAGFlow
+  `similarity_threshold` 기본값 0.1은 튜닝된 값이 아닙니다.
+- **불충분하면 거절한다.** RAGFlow는 재검색 루프가 끝나도 `partial_answer`로 잔여 근거를
+  답으로 내보냅니다. 저희는 그 지점을 거절로 닫습니다.
+- **재작성 루프는 넣지 않는다.** 홀드아웃 MRR이 1.000이라 검색 누락이 병목이 아니고,
+  로컬 7B 한 호출이 35~86초라 루프는 시연을 죽입니다.
+
+2번과 3번이 실제로 희소합니다. 근거는 [`CLAUDE.md`](CLAUDE.md) §1.1에 있습니다.
 
 ---
 
@@ -42,9 +52,24 @@ streamlit run app.py
 **Windows 주의**: 이 저장소는 `python3`가 아니라 `python`을 씁니다.
 PowerShell에는 `export`와 `VAR=x cmd` 문법이 없습니다. `$env:NAME="..."`를 쓰세요.
 
-**전용 venv를 권장하는 이유**: 시스템 파이썬에 다른 도구가 깔려 있으면 의존성이 충돌합니다.
-개발 머신에서 실제로 `streamlit`과 `fastapi`가 `starlette` 버전을 두고 충돌해
-`streamlit run`이 기동하지 못했습니다. venv를 쓰면 이 문제가 없습니다.
+**전용 venv를 권장하는 이유**: 이 프로젝트는 `fastapi`를 쓰지 않지만, 시스템 파이썬에
+다른 도구가 깔아둔 오래된 `fastapi`가 있으면 그것이 `starlette` 버전을 묶어 `streamlit`이
+기동하지 못합니다. 깨끗한 venv에는 `fastapi`가 설치되지 않으므로 이 문제가 아예 없습니다.
+
+<details>
+<summary><b>이 오류가 나면</b>: <code>ImportError: cannot import name 'DEFAULT_EXCLUDED_CONTENT_TYPES'</code></summary>
+
+환경에 오래된 `fastapi`(`starlette<0.42`를 요구)가 있는데 `streamlit>=1.57`이 그보다 새로운
+`starlette`를 필요로 해서 생기는 충돌입니다. **이 저장소의 의존성 문제가 아닙니다.**
+
+해결은 둘 중 하나입니다.
+- 깨끗한 venv를 만든다 (권장). `fastapi`가 안 깔리므로 충돌 조건이 사라집니다
+- 기존 환경을 쓴다면 `pip install "streamlit<1.57"`. 1.57 미만은 tornado를 쓰므로
+  `starlette`를 아예 임포트하지 않습니다. 이 앱은 1.57+ 기능을 쓰지 않습니다
+
+`requirements.txt`에 상한을 걸지 않은 이유: 이 충돌은 **다른 도구가 오염시킨 환경에서만**
+발생합니다. 그것 때문에 모든 사용자를 낡은 버전에 묶는 것은 맞지 않습니다.
+</details>
 
 ### 키가 하나도 없어도 됩니다
 
@@ -146,10 +171,11 @@ MRR로 alpha를 고르려 했으나 **모든 alpha에서 1.000이라 변별력�
 
 정직하게 적습니다. 확인하지 않은 것을 확인했다고 쓰지 않습니다.
 
-- **LLM 생성 경로가 한 번도 실행된 적이 없습니다.** API 키와 Ollama가 모두 없는 환경에서
-  개발했습니다. 따라서 출처 표기, 인용 검증, 프롬프트 인젝션 방어는 코드만 있고 **미검증**입니다.
+- **골든셋 전체 LLM 평가**(`python eval/evaluate.py`, 답변 가능 문항마다 생성 호출)는 아직 없습니다.
+  표본 경로는 확인했습니다: 신입 연차 신청(출처·시행일 표기), 창립기념일(1겹 거부),
+  G36 야근 식대 한도(2겹 JSON 거부, `missing: ['야근 식대 한도']`).
 - 거부 임계값이 임베딩 백엔드마다 다릅니다. bge 외 백엔드의 값은 아직 스윕으로 확정하지 않았습니다.
-- 관측성(Phoenix 트레이싱, `logs/` 스키마)은 미착수입니다.
+- 관측성(Phoenix 트레이싱, `logs/` 스키마)과 LLM-as-a-Judge는 미착수입니다.
 
 ---
 
@@ -169,9 +195,9 @@ src/ingest.py     조항 단위 청킹 + 임베딩 + ChromaDB 적재
 src/store.py      ChromaDB. 권한 필터를 where 절로 DB에 내려보냄
 src/retriever.py  dense / BM25 / 앙상블 검색
 src/bm25.py       kiwipiepy 형태소 + BM25
-src/answer.py     거부 레이어 + 인용 강제 + 인용 검증
-eval/             골든셋 40문항, 3방식 비교, 권한 전수 검사
-app.py            Streamlit 데모
+src/answer.py     거부 3겹. 2겹은 RAGFlow 형식 JSON (ok/missing/use). 불충분하면 거절
+eval/             골든셋 40문항, 3방식 비교, 권한 전수 검사, 인용 형식 자체 점검
+app.py            Streamlit 데모. 출처 카드에 조항 원문. 지표는 사이드바 하단
 ```
 
 ## 설계상 바꾸면 안 되는 것

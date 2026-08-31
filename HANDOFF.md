@@ -43,20 +43,17 @@
   배포하지 않는다. 깃헙에서 내려받아 로컬 실행하는 데모다
 - **브랜치**: `main`
 - **진행중(미완)**:
-  1. **UI를 여전히 눈으로 못 봤다.** `streamlit run`은 이제 HTTP 200으로 뜬다
-     (streamlit 1.58 -> 1.56 다운그레이드로 해결). 그러나 브라우저 확장 미연결 + playwright
-     미설치라 **화면 렌더링은 확인하지 못했다.** 대신 화면에 들어갈 데이터를 시나리오
-     4단계로 검증했다
-  2. **Ollama 서버는 떠 있으나 모델이 0개다.** `ollama pull qwen2.5:7b` 하면
-     **LLM 생성 경로가 처음으로 실행된다.** 현재 가장 큰 미검증 영역
-  3. 발표용 설명 자료 없음
-  4. `docs/onprem_architecture.md`가 `docs/onprem-design.md`와 중복이고 낡았다. 삭제 대상
-  5. 죽은 중복본 3건 미삭제: `CLAUDE (2).md`, `golden_set.json`, `onprem_architecture.md`
+  1. 발표용 설명 자료 없음 (산출물 체크리스트 마지막 항)
+  2. `docs/onprem_architecture.md`가 `docs/onprem-design.md`와 중복이고 낡았다. 삭제 대상
+  3. 죽은 중복본 3건 미삭제: `CLAUDE (2).md`, 루트 `golden_set.json`, 루트 `onprem_architecture.md`
+  4. `eval/evaluate.py` 전체 모드(LLM 호출)를 골든셋으로 안 돌렸다. 2겹 효과의 정량 수치가 없다
+  5. Pretendard 웹폰트가 로드되지 않는다. CDN은 온프렘과 충돌
+  6. bge 외 임베딩 백엔드 임계값은 스윕으로 확정하지 않았다
 - **막힌 것 / 사람 결정 필요**:
-  - **LLM 생성 경로가 한 번도 실행된 적이 없다.** API 키 3종 전부 미설정 + Ollama 미설치.
-    출처 표기·인용 검증·인젝션 방어가 전부 미검증 상태로 남아 있다
-  - Ollama 설치 여부와 한국어 모델 선택 (`qwen2.5:7b`로 기본값만 잡아둠)
-- **작업 트리**: clean
+  - **"대기업/중견 수준 더미데이터"의 정의.** 양인지, 조직 복잡도인지, 문서 종류인지,
+    권한을 등급×부서 2차원으로 바꿀지. 답이 나오기 전에 문서를 늘리지 않는 편이 맞다
+  - Ollama 한국어 모델을 `qwen2.5:7b`로 둘지 비교 평가 없음
+- **작업 트리**: 이 커밋에 커서 세션 변경을 담는다. 죽은 중복본 3건은 커밋하지 않는다
 
 ---
 
@@ -127,6 +124,27 @@
 - **왜**: 그건 3세션 **동시** 작업용이다. 여기는 1폴더 **순차 교대**라 전부 과잉
 - **되돌리는 조건**: 진짜 병렬 세션이 필요해지면 `C:\dev\new-project.ps1` 경로로 다시 깐다
 
+### 2026-08-31 - RAGFlow 충분성 JSON은 흡수, 재작성 루프와 부분 답은 버린다
+- **정한 것**: 2겹을 `NO_ANSWER` 문자열 매칭에서 `ok` / `missing` / `use` JSON 판정으로 바꾼다.
+  생성과 판정은 **한 호출**. RAGFlow 필드명 별칭도 읽는다. 불충분하면 거절로 닫는다
+- **왜**: RAGFlow `sufficiency_select.md`의 정교함은 판정 형식이다. 우리 홀드아웃 MRR은 1.000이고
+  로컬 7B 한 호출이 35~86초라 재검색 루프는 시연을 죽인다. RAGFlow는 루프 종료 후에도
+  `partial_answer = True`로 잔여 근거를 답으로 보낸다 (fail-open)
+- **버린 것**: `agentic_rag_graph.py` 재작성 루프, CoT 단계별 추론(§6.2), Chainlit / kotaemon /
+  rag-web-ui / basechat UI 교체, 별도 충분성 LLM 호출
+
+### 2026-08-31 - CPU 강제를 코드에 넣지 않는다
+- **정한 것**: `OLLAMA_NUM_GPU` 환경변수. 이 머신은 `.env.local`에서 `0`
+- **왜**: GPU 드라이버가 CUDA 커널과 안 맞으면 `device kernel image is invalid`로 HTTP 500.
+  코드에 `num_gpu:0`을 넣으면 GPU가 정상인 환경까지 CPU로 묶이고 설계서 §3.2와 모순
+- **버린 것**: `llm.py`에 `num_gpu:0` 하드코딩
+
+### 2026-08-31 - streamlit 상한을 requirements에 걸지 않는다
+- **정한 것**: `streamlit>=1.30`. 충돌 우회는 README에만 적는다
+- **왜**: 원인은 오염된 환경의 `fastapi 0.115.6 → starlette<0.42`이다. fastapi는 이 프로젝트
+  의존성이 아니다. 깨끗한 venv에서는 충돌이 없다
+- **버린 것**: `streamlit<1.57` 핀 (심사위원이 버전을 못 고른다)
+
 ---
 
 ## 세션 로그 (최근 5개, 오래된 건 삭제)
@@ -138,6 +156,30 @@
 > - "다음 것"은 명령형이 아니라 **상태 서술형**으로 쓴다.
 >   나쁨: `테스트 추가할 것` / 좋음: `parseConfig의 빈 입력 경로에 테스트가 없음. 다른 분기는 tests/config.spec.ts가 덮고 있음`
 >   명령형은 자기 근거를 숨겨서, 코드가 움직인 뒤에도 그 지시가 아직 유효한지 판단할 수 없다.
+
+### 2026-08-31 [CU] 충분성 JSON 흡수 + 출처 카드 수정 + 인계 갱신
+- **한 일**:
+  - 2겹을 RAGFlow 형식(`ok` / `missing` / `use`) JSON으로 바꾸고, 불충분하면 거절로 닫음.
+    프롬프트는 §6 6대 블록. 근거 헤더는 `[문서명 / 섹션]` (예전 `[출처 N]`은 모델이 베낌)
+  - 인용 실패 시 답을 보여주지 않음. `OLLAMA_NUM_GPU`는 환경변수. streamlit 상한 제거
+  - 출처 카드 본문을 카드 안으로. 다크 테마에서 제목이 사라지던 것 수정.
+    최고 유사도·차단 청크·검색 방식을 사이드바 하단으로 이동
+  - 외부 자료 6건 검토. UI 프레임워크 교체와 재작성 루프는 적용하지 않음
+- **검증**:
+  - `python eval/test_citations.py` -> 자체 점검 통과 (6대 블록, `[출처 1]` 검출, RAGFlow 키 별칭, useful 필터)
+  - `python src/providers.py` -> `Ollama 서버 응답 / 모델 ['qwen2.5:7b'] / 사용 가능 True`,
+    모드 `온프렘 모드 · 로컬 BGE-M3 + Ollama · 외부 API 호출 없음`
+  - `ask('연차는 사용 며칠 전에 신청해야 하나요?','intern')` -> 답변
+    `[휴가 및 근태 규정 / 제2조 (연차 사용 신청)] (시행일 2026-03-01)`, `use`가 1번 청크만
+  - `ask('회사 창립기념일은 언제인가요?','intern')` -> 1겹 거부, 최고점 0.374 < 0.56
+  - `ask('야근 식대를 20시 이전에 사용하면 한도가 얼마인가요?','employee')` -> 1겹 통과(0.763) 후
+    2겹 거부, `missing: ['야근 식대 한도']`
+  - `python -m streamlit run app.py` -> HTTP 200. 브라우저에서 `.source-card` 4장 안에 조항 원문,
+    지표 3개가 `stSidebar` 안에 있음 (`inSidebar: true`)
+- **다음 것**:
+  - 골든셋 전체 LLM 평가(`evaluate.py` 기본 모드)가 없다. 2겹 효과의 정량 수치가 여기서 나온다
+  - 대기업 더미데이터 확대는 규모·권한모델 정의가 없어 코드로 들어가지 않은 상태다
+  - 발표 자료가 없고, 죽은 중복본 3건과 `docs/onprem_architecture.md`가 아직 있다
 
 ### 2026-08-31 [CC] Streamlit 기동 복구 + alpha 측정 확정 + Ollama 판정 버그 수정
 - **한 일**:
@@ -210,15 +252,3 @@
 - **한 일**: `README.md`에 리포 목적 한 줄 설명 추가 (순차 교대 협업, `HANDOFF.md` 인계)
 - **검증**: **[미검증]** 문서만 변경. 자동 테스트 대상 없음
 - **다음 것**: 프로젝트 주제와 스택이 미정 상태. `CLAUDE.md`의 빌드/테스트/린트 명령이 자리표시자로 비어 있음
-
-### 2026-08-31 [CC] 인계 프로토콜 부트스트랩
-- **한 일**: 원격 클론, `HANDOFF.md` / `CLAUDE.md` / `.cursor/rules/handoff.mdc` / `.gitignore` 생성
-- **검증**: `git check-ignore -v .claude/.credentials.json .claude/settings.local.json .evidence/ledger.md` ->
-  ```
-  .gitignore:6:**/.credentials.json	.claude/.credentials.json
-  .gitignore:3:.claude/settings.local.json	.claude/settings.local.json
-  .gitignore:7:.evidence/	.evidence/ledger.md
-  ```
-  `.cursor/rules/handoff.mdc`는 무시되지 않음(추적됨) 확인. 그 외 자동 테스트 대상 없음(문서/설정만)
-- **다음 것**: 프로젝트 주제와 스택이 미정 상태. `CLAUDE.md`의 빌드/테스트/린트 명령이 자리표시자로 비어 있음.
-  프로토콜 왕복 테스트(커서에서 한 번 커밋 -> 클로드코드에서 이 파일만 읽고 상황 파악)는 아직 안 해봄

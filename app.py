@@ -10,6 +10,7 @@
 - 액센트는 #0066cc 하나뿐이고, 상태색은 3px 좌측 바와 배지 밖으로 나가지 않는다.
 - 그림자는 시스템 전체에서 출처 카드 하나에만 붙는다. 근거가 곧 제품이기 때문이다.
 """
+import html
 import sys
 from pathlib import Path
 
@@ -17,7 +18,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
 
 import streamlit as st  # noqa: E402
 
-from config import ABSTAIN_THRESHOLD, ROLE_CLEARANCE, ROLE_LABEL  # noqa: E402
+from config import (ABSTAIN_THRESHOLD, ENSEMBLE_ALPHA, ROLE_CLEARANCE,
+                    ROLE_LABEL)  # noqa: E402
 from llm import NoLLMKey  # noqa: E402
 from providers import capabilities, mode_label  # noqa: E402
 from retriever import log_access, search, should_abstain  # noqa: E402
@@ -45,12 +47,20 @@ st.markdown("""
     margin-right: 6px;
   }
   .state-block { border-left: 3px solid var(--hairline); padding: 4px 0 4px 16px; margin: 8px 0 24px 0; }
-  /* 출처 카드. 시스템 전체에서 유일한 그림자다. */
+  /* 출처 카드. 시스템 전체에서 유일한 그림자다.
+     Streamlit 다크 테마는 글자를 밝게 뒤집어서, 양피지 배경 위에서는
+     제목이 사라진다. 카드 안 색은 테마와 무관하게 고정한다. */
   .source-card {
-    background: var(--parchment); border-radius: 18px; padding: 24px;
+    background: var(--parchment); color: var(--ink);
+    border-radius: 18px; padding: 24px;
     box-shadow: rgba(0,0,0,0.22) 3px 5px 30px 0; margin: 16px 0 40px 0;
   }
-  .source-meta { color: var(--muted); font-size: 14px; font-variant-numeric: tabular-nums; }
+  .source-card, .source-card * { color: var(--ink) !important; }
+  .source-title { font-size: 17px; font-weight: 600; line-height: 1.47; }
+  .source-meta { color: var(--muted) !important; font-size: 14px;
+                 font-variant-numeric: tabular-nums; margin-top: 4px; }
+  .source-body { margin-top: 12px; font-size: 17px; line-height: 1.47;
+                 white-space: pre-wrap; }
   .num { font-variant-numeric: tabular-nums; }
 </style>
 """, unsafe_allow_html=True)
@@ -77,10 +87,12 @@ with st.sidebar:
         if m not in cap["modes"] and m in cap["reasons"]:
             st.caption(f"{labels[m]} 사용 불가: {cap['reasons'][m]}")
 
-    alpha = 0.5
+    alpha = ENSEMBLE_ALPHA
     if mode == "ensemble":
-        alpha = st.slider("앙상블 가중치 (높을수록 임베딩 쪽)", 0.0, 1.0, 0.5, 0.1)
-        st.caption("이 값은 아직 측정으로 확정하지 않은 임시값입니다.")
+        alpha = st.slider("앙상블 가중치 (높을수록 임베딩 쪽)",
+                          0.0, 1.0, ENSEMBLE_ALPHA, 0.1)
+        st.caption(f"기본값 {ENSEMBLE_ALPHA}는 개발셋 분리도로 고른 값입니다 "
+                   "(`evaluate.py --alpha-scan`). 홀드아웃은 쓰지 않았습니다.")
 
     st.divider()
     st.caption(mode_label(cap))
@@ -107,16 +119,21 @@ def badge(text: str, color: str) -> str:
 
 
 def render_sources(hits):
+    """검색된 청크를 출처 카드 안에 넣는다. 본문을 카드 밖에 두면
+    다크 테마에서 빈 흰 상자로 보인다."""
     st.markdown(f"**근거 문서 {len(hits)}건**")
     for h in hits:
+        title = html.escape(f'{h["rank"]}. {h["title"]} / {h["section"]}')
+        meta = html.escape(
+            f'{h["doc_id"]} · {h["version"]} · 시행일 {h["effective_date"]} · '
+            f'등급 {h["clearance"]} · 유사도 {h["score"]:.3f}')
+        body = html.escape(h["text"][:400])
         st.markdown(
             f'<div class="source-card">'
-            f'<div><b>{h["rank"]}. {h["title"]} / {h["section"]}</b></div>'
-            f'<div class="source-meta">{h["doc_id"]} · {h["version"]} · '
-            f'시행일 {h["effective_date"]} · 등급 {h["clearance"]} · '
-            f'유사도 {h["score"]:.3f}</div>'
+            f'<div class="source-title">{title}</div>'
+            f'<div class="source-meta">{meta}</div>'
+            f'<div class="source-body">{body}</div>'
             f'</div>', unsafe_allow_html=True)
-        st.text(h["text"][:400])
 
 
 query = st.chat_input("사내 규정에 대해 질문하세요")
@@ -184,7 +201,14 @@ if query:
                         unsafe_allow_html=True)
             render_sources(res["hits"])
 
-    c1, c2, c3 = st.columns(3)
-    c1.metric("최고 유사도", f"{max_score:.3f}")
-    c2.metric("권한으로 차단된 청크", blocked)
-    c3.metric("검색 방식", mode)
+    st.session_state["last_stats"] = {
+        "max_score": max_score, "blocked": blocked, "mode": mode,
+    }
+
+stats = st.session_state.get("last_stats")
+if stats:
+    with st.sidebar:
+        st.divider()
+        st.metric("최고 유사도", f"{stats['max_score']:.3f}")
+        st.metric("권한으로 차단된 청크", stats["blocked"])
+        st.metric("검색 방식", stats["mode"])

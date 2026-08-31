@@ -52,12 +52,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 2026-08-31, 대형 RAG 리포 4종(RAGFlow 89.7k★ / Dify 153.9k★ / LangChain 145.3k★ /
 Langflow 153.9k★)의 소스를 대조했다. 근거와 줄번호는 `C:\dev\REPO_REVIEW_LOG.md` "14차 배치".
 
-**거부는 우리 차별점이 아니다. 이 전제가 뒤집혔다.**
+**거부를 '하는 것'은 우리 차별점이 아니다. 이 전제는 유지한다.**
 RAGFlow는 거부 경로를 둘 갖고 있고, 그중 에이전틱 경로
-(`rag/advanced_rag/agentic_rag_graph.py`, 1,527줄)의 LLM 충분성 판정기
-(`rag/prompts/sufficiency_select.md`)는 우리 2겹보다 정교하다. 구조화 JSON
-(`coverage` / `missing_information` / `confidence` / `useful_chunk_ids`)을 뱉고,
-불충분하면 질의를 재작성해 재검색하는 루프까지 돈다.
+(`rag/advanced_rag/agentic_rag_graph.py`)의 LLM 충분성 판정기
+(`rag/prompts/sufficiency_select.md`)가 구조화 JSON
+(`coverage` / `missing_information` / `confidence` / `useful_chunk_ids`)을 뱉고
+불충분하면 질의를 재작성해 재검색한다.
+
+**흡수한 것 / 버린 것** (2026-08-31, 원문 재확인)
+- **흡수**: 2겹을 `NO_ANSWER` 문자열 매칭에서 `ok` / `missing` / `use` JSON 판정으로 바꿨다.
+  키 별칭으로 RAGFlow 필드명(`is_sufficient`, `missing_information`, `useful_chunk_ids`)도 읽는다.
+  생성과 판정을 **한 호출**에 넣었다. RAGFlow는 판정기와 생성을 따로 부른다.
+- **버린 것**: 재작성 루프. 홀드아웃 MRR 1.000이고 로컬 7B 한 호출이 35~86초다.
+- **더 엄격한 것**: RAGFlow는 루프 종료 후에도 `partial_answer = True`로 잔여 근거를 답으로
+  내보낸다 (`formalize_answer`). SCA 호출이 실패하면 초안을 그대로 채택한다. 둘 다 fail-open.
+  우리는 불충분하면 거절로 닫는다.
 
 **살아남은 차별점 2개**
 - **권한**: 4개 리포 전부 데이터셋/KB 단위 ACL만 있다. `clearance` 코드 검색 0/4.
@@ -71,7 +80,7 @@ RAGFlow는 거부 경로를 둘 갖고 있고, 그중 에이전틱 경로
 
 | 축 | 쓰지 말 것 | 쓸 것 |
 |---|---|---|
-| 거부 | "근거 없으면 거부하는 건 우리뿐" | "RAGFlow도 거부를 한다. 우리가 다른 점은 **거부를 기능이 아니라 측정 대상**으로 삼았다는 것이다. 오거부율을 지표로 정의하고 임계값을 홀드아웃으로 튜닝한 하네스는 없다." |
+| 거부 | "근거 없으면 거부하는 건 우리뿐" | "RAGFlow도 거부를 한다. 충분성 JSON은 거기서 가져왔다. 다른 점은 **불충분하면 부분 답을 내놓지 않고 거절로 닫는 것**, 그리고 **거부를 측정 대상**으로 삼아 오거부율을 홀드아웃으로 튜닝한 하네스가 있는 것이다." |
 | 권한 | "다른 데선 불가능" | "RAGFlow `meta_data_filter`, Dify 메타데이터 필터링으로 직접 구현은 가능하다. 다만 **기본 보안 모델로 내장한 곳이 없다.** 우리는 이걸 옵션이 아니라 기본값으로 둔다." |
 | 측정 | "다른 데는 측정이 없다" | "RAGFlow는 공개 IR 데이터셋(MS MARCO / TriviaQA / MIRACL)으로 랭킹 품질을 잰다(`rag/benchmark.py`, ranx로 ndcg@10 / map@5 / mrr@10). 우리는 **자기 도메인 골든셋으로 거부 정확도까지** 잰다. 배포된 시스템이 '우리 회사 질문에 맞게 답하고 맞게 거부하는가'를 재는 하네스는 4개 중 0개다." |
 
@@ -375,27 +384,32 @@ estimated_cost_usd, avg_retrieval_score, answer_length, cache_hit
 - **권한 필터 전수 검사 통과**: 청크 32 x 역할 3 = 96조합, 반례 0건.
   intern 19차단 / employee 9차단 / hr 0차단으로 등급 분포와 정확히 일치.
   dense(chroma `where` 경로)와 bm25 양쪽 모두 통과.
-- **검색 방식 3종 비교** 골든셋 40문항(normal 20 / trap 15 / permission 5)으로 실행됨.
-  개발셋 21문항으로 임계값 튜닝 -> 홀드아웃 19문항 보고:
-  dense 14/19, bm25 14/19, **ensemble 16/19**. 세 방식의 신뢰구간이 겹치므로
-  "ensemble이 낫다"고 단정하지 않는다.
+- **검색 방식 3종 비교** 골든셋 40문항(normal 20 / trap 15 / permission 5).
+  개발셋 21문항으로 임계값 튜닝 -> 홀드아웃 19문항 보고 (alpha 0.8):
+  dense 14/19, bm25 14/19, **ensemble 15/19**. 세 방식의 신뢰구간이 겹치므로
+  "ensemble이 낫다"고 단정하지 않는다. MRR은 세 방식 모두 1.000.
 - **제공자 능력 매트릭스** (`python src/providers.py` 자체 점검 통과):
   앤트로픽만 -> bm25 전용 / 키 0개 -> bm25 전용 / upstage·openai -> 3방식 전부.
+  현재 이 머신: embed `bge`, gen `ollama` (`qwen2.5:7b`), `onprem: True`.
 - `.env.local`이 `.gitignore`에 걸림 (`git check-ignore -v`로 확인).
+- **LLM 생성 경로 실행됨** (Ollama CPU, `OLLAMA_NUM_GPU=0`).
+  신입 연차 신청 -> 출처·시행일 표기된 답. 창립기념일 -> 1겹 거부(0.374 < 0.56).
+  G36 야근 식대 한도 -> 1겹 통과(0.763) 후 2겹 JSON 거부 (`missing: ['야근 식대 한도']`).
+- **UI**: `python -m streamlit run app.py` HTTP 200. 사이드바 모드 라벨 표시.
+  출처 카드 안에 조항 원문. 지표 3개는 사이드바 하단.
 
 **§2 확정 스택 대비 현황**
 
 | 계층 | §2 확정 | 현재 코드 | 상태 |
 |---|---|---|---|
-| LLM | Ollama 1순위 | `src/llm.py`가 Ollama -> Anthropic -> Upstage -> OpenAI 순 | 구조 일치. **Ollama 미설치라 실동작 미검증** |
+| LLM | Ollama 1순위 | `src/llm.py`가 Ollama -> Anthropic -> Upstage -> OpenAI 순 | 구조 일치. **이 머신에서 qwen2.5:7b CPU 실동작 확인** |
 | 임베딩 | bge-m3 1순위 | `src/embeddings.py` (bge / upstage / openai / hash) | 일치 |
 | 벡터스토어 | ChromaDB | ChromaDB (`src/store.py`) | 일치 (§2.3에서 FAISS 대신 채택) |
 | 캐시 | Redis | 없음 | 로드맵 7단계이므로 지금은 정상 |
 | 트레이싱 | Phoenix self-host | 없음 | 미착수 |
 
 **§2.4 "몰래 늘리지 않는다" 이행 상태**: `src/providers.py`가 백엔드 선택을 단일화했고
-`uses_external_api()` / `mode_label()`이 있다. **다만 `app.py`에 아직 연결되지 않아
-화면에는 모드가 표시되지 않는다.** 연결 전까지는 이 조항이 코드에만 있고 사용자에게는 안 보인다.
+`uses_external_api()` / `mode_label()`이 `app.py` 사이드바에 연결되어 있다.
 
 **로드맵과 현재 코드의 어긋남** (건너뛴 것이 아니라 순서가 뒤섞인 것이므로 기록만 남긴다)
 - 청킹: 로드맵 2단계는 500자 고정이나 현재는 조항 헤딩 단위다. 조항 번호를 그대로 출처로 쓰기 위한
@@ -404,31 +418,22 @@ estimated_cost_usd, avg_retrieval_score, answer_length, cache_hit
   다만 **RRF가 아니라 점수 가중합**이라 로드맵 명세와 방식이 다르다.
 
 **미검증 / 미착수**
-- **LLM 생성 경로가 한 번도 실행된 적이 없다.** API 키 미설정. 따라서 §4의 출처 표기,
-  §5의 인젝션 방어, §6의 프롬프트 6대 블록, §8의 LLM-as-a-Judge는 전부 미검증이다.
+- **골든셋 전체 LLM 평가(`evaluate.py` 기본 모드)는 한 번도 안 돌렸다.** 표본 경로(연차 / 창립기념일 / G36)만
+  확인했다. §8 LLM-as-a-Judge는 미착수.
 - **`logs/` 디렉터리가 없다.** §7.1의 로그 스키마는 아직 어디서도 기록되지 않는다.
 - **현재 코드는 LangChain을 경유하지 않는다.** 임베딩·검색·LLM 호출을 직접 구현했다.
   **이것은 이제 결함이 아니라 의도된 선택이다** (§7.2 결정 참조). 남은 미결은
   "LangChain 없이 Phoenix를 어떻게 붙이는가" 하나다.
-- **`ENSEMBLE_ALPHA = 0.5`는 근거 없는 값이다** (`src/config.py`). §10-1이 금지한
-  "근거 없이 정한 값"에 해당한다. 참고로 RAGFlow 프로덕션 기본값은 dense 0.3 / BM25 0.7이고
-  (`vector_similarity_weight` 기본 0.3), 우리 도메인은 "제N조"·부서명 같은 **어휘 일치가 강한
-  사규**라 alpha가 0.5보다 낮은 쪽일 가능성이 크다. 측정으로 정할 것.
+- **`ENSEMBLE_ALPHA = 0.8`은 개발셋 분리도로 확정했다.** (`evaluate.py --alpha-scan`)
 - Phoenix 서버 패키지(`arize-phoenix`) 설치 여부 미확인.
   `arize-phoenix-otel`과 `openinference-instrumentation-langchain`은 설치돼 있다.
-- **이 개발 머신에서 `streamlit run app.py`가 기동하지 않는다.** 앱 코드 문제가 아니라
-  환경 의존성 충돌이다: `streamlit 1.58.0`이 `starlette>=0.40.0`이라 선언해 놓고 실제로는
-  `0.41.3`에 없는 `DEFAULT_EXCLUDED_CONTENT_TYPES`를 임포트한다(선언된 하한이 틀린 패키징 버그).
-  그런데 `fastapi 0.115.6`이 `starlette<0.42.0`으로 묶어 올릴 수도 없다.
-  게다가 이 파이썬은 `C:\Program Files\PsychoPy\python.exe`(공유 시스템 파이썬)이므로
-  임의로 버전을 바꾸면 PsychoPy가 깨질 수 있다. **프로젝트 전용 venv가 정답이다.**
-  `app.py`는 `python -m py_compile` 구문 검사만 통과했고 **실행은 확인되지 않았다.**
+- **이 개발 머신에서는 `streamlit 1.56.0`으로 HTTP 200을 확인했다.**
+  `requirements.txt`에는 상한을 걸지 않는다. 오염된 환경의 `fastapi`/`starlette` 충돌 우회는 README.
+  **프로젝트 전용 venv가 정답이다.**
 - **개인정보 마스킹은 코드에 없다.** `docs/onprem-design.md` §4.4에 설계만 있다.
   더미데이터에 주민번호·연락처 형식을 생성하지 않는 것으로 대체하고 있다.
-- **`docs/onprem_architecture.md`가 `docs/onprem-design.md`와 중복이다.** 전자의 내용은
-  후자로 병합했고 그 과정에서 낡은 기술(numpy 브루트포스, OpenAI 임베딩)을 정정했다.
-  전자는 이제 **현재 구현과 어긋나는 문장을 담고 있으므로 삭제 대상이다.**
-- **`Ollama` 미설치.** 온프렘 모드의 기본 생성 백엔드인데 이 머신에 없어 실동작을 확인하지 못했다.
+- **`docs/onprem_architecture.md`가 `docs/onprem-design.md`와 중복이다.** 삭제 대상.
+- Pretendard 웹폰트 미로드. 발표 자료 없음.
 
 ---
 

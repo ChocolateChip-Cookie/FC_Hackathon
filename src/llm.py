@@ -10,7 +10,7 @@ import os
 import urllib.request
 
 from config import (CHAT_MODEL_ANTHROPIC, CHAT_MODEL_OLLAMA, CHAT_MODEL_OPENAI,
-                    CHAT_MODEL_UPSTAGE, EMBED_API, OLLAMA_HOST)
+                    CHAT_MODEL_UPSTAGE, EMBED_API, OLLAMA_HOST, OLLAMA_NUM_GPU)
 from providers import gen_backend
 
 
@@ -41,13 +41,16 @@ def complete(system: str, user: str, max_tokens: int = 800) -> str:
 
     if backend == "ollama":
         # 온프렘 경로. 스트리밍을 끄고 한 번에 받는다.
+        options = {"temperature": 0, "num_predict": max_tokens}
+        if OLLAMA_NUM_GPU is not None:
+            # 설정된 경우에만 보낸다. 안 보내면 Ollama 가 알아서 정한다.
+            options["num_gpu"] = int(OLLAMA_NUM_GPU)
         body = _post(
             f"{OLLAMA_HOST}/api/chat",
-            {"model": CHAT_MODEL_OLLAMA, "stream": False,
-             "options": {"temperature": 0, "num_predict": max_tokens},
+            {"model": CHAT_MODEL_OLLAMA, "stream": False, "options": options,
              "messages": [{"role": "system", "content": system},
                           {"role": "user", "content": user}]},
-            {}, timeout=300)   # 로컬 CPU 추론은 느리다
+            {}, timeout=600)   # 로컬 CPU 추론은 느리다. 약 8 토큰/초
         return body["message"]["content"]
 
     if backend == "anthropic":
