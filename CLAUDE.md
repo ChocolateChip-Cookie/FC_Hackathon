@@ -416,12 +416,11 @@ estimated_cost_usd, avg_retrieval_score, answer_length, cache_hit
   사규**라 alpha가 0.5보다 낮은 쪽일 가능성이 크다. 측정으로 정할 것.
 - Phoenix 서버 패키지(`arize-phoenix`) 설치 여부 미확인.
   `arize-phoenix-otel`과 `openinference-instrumentation-langchain`은 설치돼 있다.
-- **`docs/onprem-design.md`가 뼈대뿐이다.** 컨텍스트 문서 §2가 명시한 **필수 산출물 (B)**인데
-  절 제목만 있고 내용이 없다. 현재 가장 큰 구멍이다.
-- **더미 사규에 "가상의 회사" 표시가 없다.** 컨텍스트 문서 §4가 "문서 상단과 README에 명시"를
-  명시적으로 요구하는데 `data/policies/*.md` front matter에 없다.
-- **개인정보 마스킹과 질의 로그 취급 방침**(컨텍스트 §4)이 코드에도 문서에도 없다.
-  최소한 `docs/onprem-design.md`에는 반드시 들어가야 한다.
+- **개인정보 마스킹은 코드에 없다.** `docs/onprem-design.md` §4.4에 설계만 있다.
+  더미데이터에 주민번호·연락처 형식을 생성하지 않는 것으로 대체하고 있다.
+- **`docs/onprem_architecture.md`가 `docs/onprem-design.md`와 중복이다.** 전자의 내용은
+  후자로 병합했고 그 과정에서 낡은 기술(numpy 브루트포스, OpenAI 임베딩)을 정정했다.
+  전자는 이제 **현재 구현과 어긋나는 문장을 담고 있으므로 삭제 대상이다.**
 - **`Ollama` 미설치.** 온프렘 모드의 기본 생성 백엔드인데 이 머신에 없어 실동작을 확인하지 못했다.
 
 ---
