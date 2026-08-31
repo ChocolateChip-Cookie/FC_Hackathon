@@ -1,7 +1,17 @@
-# Secrets and machine-local state (R18). .cursor/rules/ is deliberately tracked:
-# it is half of the shared handoff protocol.
-.claude/settings.local.json
-.claude/.credentials.json
-.claude/sessions/
+__pycache__/
+*.pyc
+data/index.npz
+data/access_log.jsonl
+data/chroma/
+
+# API 키. .env.local.example 만 커밋한다.
+.env
+.env.local
+.env.*.local
 **/.credentials.json
+
+# 세션 로컬 상태
+.claude/settings.local.json
+.claude/sessions/
 .evidence/
+logs/
