@@ -176,8 +176,13 @@ def ask(query: str, role=None, mode: str = DEFAULT_MODE, alpha: float = ENSEMBLE
     hits, max_score, blocked, backend = search(
         query, role, mode, alpha, user=user)
 
-    account = user if user is not None else resolve_user(role)
-    ident = account["label"] if isinstance(account, dict) else str(account)
+    # resolve_user 를 dict 경로에서도 반드시 통과시킨다.
+    # UI 는 {"dept","position"} 만 만들고 label 을 넣지 않는다 (app.py 사이드바).
+    # 여기서 raw dict 를 그대로 인덱싱하면 **UI 에서 답변이 나오는 순간 KeyError 로 죽는다.**
+    # 실제로 그랬다. 거부는 ask() 전에 처리돼서 안 터지고 답변 경로만 터진다.
+    # 골든셋 평가는 역할 문자열을 넘겨 이 경로를 밟지 않으므로 평가로는 절대 안 잡힌다.
+    account = resolve_user(user if user is not None else role)
+    ident = account["label"]
 
     result = {"query": query, "role": ident, "hits": hits, "max_score": max_score,
               "blocked_chunks": blocked, "backend": backend, "mode": mode,
