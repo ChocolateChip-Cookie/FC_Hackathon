@@ -38,24 +38,98 @@
 
 ## 현재 상태
 
-- **목표**: AX 해커톤 주제 01 / Case 1, 사내 온보딩 RAG 챗봇.
+- **목표**: AX 해커톤 주제 01 / Case 1, 가상 기업 **한성산업** 사내 온보딩 RAG 챗봇.
   **상위 제약은 `CLAUDE-hackathon-context.md`이며 `CLAUDE.md`가 이를 `@import` 한다.**
-  배포하지 않는다. 깃헙에서 내려받아 로컬 실행하는 데모다
-- **브랜치**: `main` (로컬 `6ebe03c`, origin 보다 1커밋 앞. push 안 함)
-- **진행중(미완)**:
-  1. 발표용 설명 자료 없음
-  2. BGE 임계값 0.56은 구 40문항 기준. 107문항으로 다시 스윕하지 않음
-  3. OpenAI 임베딩 임계값 미측정
-  4. Pretendard 웹폰트 미로드
-- **검증된 숫자 (발표에 hash 61%를 쓰지 말 것)**:
-  - 권한 bm25 전수: live 179 × 5 = 895조합, 반례 0. 개발사원 125 / 팀장 131 / 인사 143 / 재무 138 / 감사 131
-  - BGE retrieval-only: **92/107 (86%)**
-  - BGE + Ollama `qwen2.5:7b`: **93/107 (87%)**
-  - Upstage `--compare` 홀드아웃: dense 50/53, ensemble 49/53 (임계값 0.46), bm25 41/53. 신뢰구간 겹침
-  - Upstage retrieval-only (스윕 전 0.45): **97/107 (91%)**
-  - Upstage + `solar-pro`: **100/107 (93%)**. 거부 37/37, 함정 12/12, 권한 14/14, 충돌 3/3
-- **Chroma**: BGE 183청크로 복원함 (`restore_from_prebuilt('bge')`). `data/index/upstage.npz` 도 커밋됨
-- **워킹트리**: 이 커밋으로 측정 경로(429 재시도, upstage 임계값, README, 인덱스)를 정리. push는 안 함
+  배포하지 않는다. 깃헙에서 내려받아 로컬 실행하는 데모다.
+- **브랜치**: `main`. origin과 동기화됨 (`a0b4270`까지 push 완료).
+  **이번 커밋**에서 BGE 임계값 0.63 + README + HANDOFF 정리가 반영된다.
+
+### 코퍼스·평가셋 (2026-08-31~09-01 마이그레이션 완료)
+
+| 항목 | 값 |
+|---|---|
+| 사규 문서 | 26종 (`data/policies/`, searchable 25 + 안내 1) |
+| 청크 | **183** (`## 제N조` 헤딩 단위). live 179 (superseded 4 제외) |
+| 등급 분포 | public 90 / internal 46 / confidential 43 (live 기준) |
+| 권한 모델 | **2차원 ACL**: 등급 × 부서·직책. `config.visible()` 단일 판정 |
+| 골든셋 | **107문항** (`eval/golden_set.json`). 구 40문항은 `eval/golden_set_v1_legacy.json` |
+| 골든셋 구성 | normal 70 / abstain 37 / trap 12 / permission 14 / conflict 3 |
+| 홀드아웃 분리 | 개발 54 / 홀드아웃 53 (`evaluate.py --compare`) |
+
+### RAG 정확도 측정: **핵심 테스트는 완료**
+
+발표에 **hash 임베딩 61%**를 쓰지 말 것 (오프라인 폴백).
+
+#### 권한 (전수, 표본 아님)
+
+```bash
+python eval/permission_matrix.py bm25
+```
+
+live 179 × 페르소나 5 = **895조합, 반례 0**. dense 경로 전수는 이번 코퍼스 이후 미실행.
+
+#### BGE (온프렘 기본, `EMBED_BACKEND=bge`)
+
+| 측정 | 명령 | 결과 | 비고 |
+|---|---|---|---|
+| 홀드아웃 스윕 | `evaluate.py --compare` | dense 48/53 (0.63), ensemble **49/53 (92%)** (0.63), bm25 41/53 (0.69) | MRR dense/ensemble 1.000 |
+| 검색+거부만 | `--retrieval-only` | **98/107 (92%)** | 응답 62/70, 거부 36/37, 함정 11/12, 오거부 5/70 |
+| 검색+거부+생성 | `evaluate.py` GEN=ollama | **93/107 (87%)** | **임계값 0.56에서 측정**. 0.63 재스윕 후 생성 경로는 재실행 안 함 (~50분) |
+
+`src/config.py` BGE 임계값: dense **0.63** / bm25 **0.69** / ensemble **0.63** (구 0.56 폐기).
+
+#### Upstage (클라우드 체험, `EMBED_BACKEND=upstage`)
+
+| 측정 | 결과 | 비고 |
+|---|---|---|
+| ingest | 183청크, 4096차원, `data/index/upstage.npz` 커밋됨 | 첫 키 401 실패 후 새 키로 성공 |
+| 홀드아웃 스윕 | dense 50/53 (0.40), ensemble 49/53 (**0.46**), bm25 41/53 | `config.py` 반영됨 (`a0b4270`) |
+| 검색+거부만 | **97/107 (91%)** | 스윕 **전** 임시 임계값 0.45에서 측정. 0.46으로 재측정 안 함 |
+| 검색+거부+생성 | **100/107 (93%)** | 거부 37/37, 함정 12/12, 권한 14/14, 충돌 3/3. 429 후 backoff 재시도로 완료 |
+
+#### 발표용 숫자 가이드 (헷갈리지 말 것)
+
+- **온프렘 신뢰도 축**: BGE 홀드아웃 **49/53 (92%)** + "임계값을 개발셋으로 튜닝, 홀드아웃으로 보고".
+  전체 98/107은 dev+holdout 합산이라 홀드아웃만 말하는 것보다 약함.
+- **클라우드 비교**: Upstage 전체 **100/107 (93%)**.
+- **93/107 (Ollama)**: 반드시 "0.56 임계값에서 측정, 0.63 재스윕 후 미재측정"이라고 라벨.
+- **97/107 (Upstage retrieval)**: 0.45 임시값. 공식 0.46 재측정은 선택.
+
+### 인프라·코드 상태
+
+| 항목 | 상태 |
+|---|---|
+| Chroma | BGE **183청크** (`restore_from_prebuilt('bge')`로 복원). 온프렘 시연 기본 |
+| 사전 빌드 인덱스 | `data/index/bge.npz`, `data/index/upstage.npz` 커밋됨 |
+| HTTP 429 재시도 | `src/embeddings.py`, `src/llm.py` (최대 6회 exponential backoff) |
+| 평가 진행 로그 | `eval/evaluate.py` 문항별 `llm...` / `skip-llm` 출력 |
+| Streamlit | `app.py`. 역할×소속 2D UI. 사이드바 `providers.mode_label()` |
+| 관측성 | Phoenix, `logs/` JSON Lines 스키마 **미착수** |
+| LLM-as-a-Judge | **미착수** (로드맵 8단계) |
+
+### Git 이력 (최근 push된 것)
+
+| 커밋 | 내용 |
+|---|---|
+| `6ebe03c` | 사규 26종 + 2D ACL + 골든셋 107 + bge.npz + UI/eval 확장 |
+| `a0b4270` | Upstage 수치 README, 429 재시도, upstage.npz, upstage 임계값 0.46 |
+| **(이번)** | BGE 0.63 `config.py` + README + HANDOFF 클로드코드 인계 |
+
+### 미완 / 선택 (RAG 측정과 별개)
+
+1. **발표용 설명 자료** 없음 (산출물 체크리스트 미충족)
+2. BGE + Ollama 전체를 **0.63**으로 재실행 (선택, ~50분. 필수 아님)
+3. Upstage `--retrieval-only`를 **0.46**으로 재실행 (선택)
+4. OpenAI 임베딩 `--compare` 스윕 (온프렘 시연에는 불필요)
+5. `permission_matrix.py dense` (bm25만 895 전수 완료)
+6. Pretendard 웹폰트, Phoenix, LLM-as-a-Judge
+
+### 클로드코드 시작 시 권장 순서
+
+1. `git pull` 후 `git log -3 --oneline --stat`으로 이 문서와 대조
+2. `python eval/permission_matrix.py bm25` (빠른 회귀, 반례 0 확인)
+3. 발표 자료 또는 `docs/onprem-design.md` 보강 중 우선순위는 사용자에게 확인
+4. Ollama 0.63 전체 재평가는 **사용자가 명시 요청할 때만** (~50분)
 
 ---
 
@@ -155,6 +229,19 @@
 - **버린 것**: 전체 107로 임계값을 다시 고르기 (그러면 홀드아웃이 아님).
   401을 재시도하기 (잘못된 키를 반복 호출하는 꼴)
 
+### 2026-09-01 - BGE 임계값을 107문항 홀드아웃으로 재스윕
+- **정한 것**: bge dense 0.63 / bm25 0.69 / ensemble 0.63
+- **왜**: 0.56은 구 40문항 값이라 107문항 점수 분포와 안 맞음.
+  `--compare` 개발 54 / 홀드아웃 53. 검색 전량은 0.63에서 98/107
+- **버린 것**: 0.56 유지. 전체 107로 임계값을 다시 고르기.
+  이번 턴에 Ollama 전체 평가를 0.63으로 50분 재실행하기
+
+### 2026-09-01 - RAG 골든셋 측정은 "필수 완료", 생성 경로 0.63 재측정은 선택
+- **정한 것**: 107문항 retrieval + Upstage full + BGE/Upstage 홀드아웃 스윕으로 발표 숫자 확보.
+  Ollama full 93/107은 0.56 라벨 유지. 0.63 full 재실행은 사용자 명시 요청 시에만
+- **왜**: 1겹은 0.63으로 이미 재측정됨. 생성 경로는 50분이고 retrieval 98/107보다 낮을 가능성
+- **버린 것**: "측정 미완"으로 보고 0.63 Ollama full을 자동 재실행하기
+
 ---
 
 ## 세션 로그 (최근 5개, 오래된 건 삭제)
@@ -164,8 +251,28 @@
 >
 > - `[미검증]`은 위반이 아니고 비용도 0이다. **실행하지 않은 검증을 적는 것만이 위반이다.**
 > - "다음 것"은 명령형이 아니라 **상태 서술형**으로 쓴다.
->   나쁨: `테스트 추가할 것` / 좋음: `parseConfig의 빈 입력 경로에 테스트가 없음. 다른 분기는 tests/config.spec.ts가 덮고 있음`
->   명령형은 자기 근거를 숨겨서, 코드가 움직인 뒤에도 그 지시가 아직 유효한지 판단할 수 없다.
+
+### 2026-09-01 [CU] 클로드코드 인계: HANDOFF 전면 갱신 + BGE 0.63 커밋
+- **한 일**:
+  - `HANDOFF.md` "현재 상태"를 107문항·2D ACL·전 측정 숫자·Git 이력·발표 가이드로 재작성
+  - `src/config.py` BGE 0.63 / README 107문항 수치와 동기화 (origin `a0b4270`은 upstage만 반영돼 있었음)
+  - 결정 로그에 "RAG 측정 필수 완료 / Ollama 0.63 재측정 선택" 추가
+- **검증**:
+  - `git status` -> `main`, origin up to date at `a0b4270`. 수정: HANDOFF, README, config
+  - `git log -2 --oneline` -> `a0b4270` Upstage, `6ebe03c` 사규/ACL/107
+  - BGE 스윕·retrieval 수치는 직전 세션 실행 결과 (본 턴 재실행 없음)
+- **다음 것**:
+  - 발표용 설명 자료가 없다
+  - 클로드코드는 `git pull` 후 이 파일 "현재 상태"와 `README.md` §검증된 수치를 발표 원천으로 쓰면 된다
+
+### 2026-09-01 [CU] BGE 임계값 107문항 재스윕
+- **한 일**: ensemble 0.56 -> 0.63. README·config 반영. Ollama 전체 평가는 재실행하지 않음
+- **검증**:
+  - `evaluate.py --compare` EMBED=bge -> 홀드아웃 ensemble 49/53 (92%), 임계값 0.63
+  - `--retrieval-only` (0.63) -> **98/107 (92%)**, 거부 36/37, 함정 11/12, 오거부 5/70
+- **다음 것**:
+  - BGE+Ollama 93/107은 여전히 0.56에서 잰 값이다
+  - origin에는 BGE 0.63이 아직 없었다 (이번 인계 커밋에서 반영)
 
 ### 2026-08-31 [CU] Upstage 스윕 + BGE Chroma 복원 + README 수치
 - **한 일**:
@@ -176,7 +283,7 @@
   - `permission_matrix.py bm25` -> 반례 0건, 허용 125/131/143/138/131
   - `restore_from_prebuilt('bge')` -> chroma count 183
 - **다음 것**:
-  - 발표 자료가 없다. OpenAI 임계값과 BGE 107문항 재스윕은 없다
+  - BGE 107문항 `--compare`는 이후 세션에서 실행됨 (위 항목)
 
 ### 2026-08-31 [CU] Upstage 재색인 + 검색/전체 평가
 - **한 일**:
@@ -184,12 +291,10 @@
   - retrieval-only 후 전체 평가. 첫 전체 평가는 429로 실패, cooldown + 429 backoff 후 재실행
 - **검증**:
   - `python src/ingest.py` EMBED=upstage -> 청크 183, chroma 183
-  - `--retrieval-only` -> **97/107 (91%)**
+  - `--retrieval-only` -> **97/107 (91%)** (임시 0.45)
   - `eval/evaluate.py` GEN=upstage -> **100/107 (93%)**, 거부 37/37, 함정 12/12, 권한 14/14, 충돌 3/3
 - **다음 것**:
-  - Upstage 임계값 0.45 는 스윕하지 않은 임시값이다
-  - Chroma 가 Upstage 라 온프렘 시연은 BGE npz 를 다시 올려야 하는 상태다
-  - 429 재시도와 `upstage.npz` 가 미커밋이다
+  - Upstage 임계값 0.45 는 이후 `--compare`로 0.46 확정됨 (`a0b4270`)
 
 ### 2026-08-31 [CU] Ollama 전체 평가 완료, Upstage 401로 중단
 - **한 일**:
@@ -200,73 +305,4 @@
   - `python -u eval/evaluate.py` (EMBED=bge, GEN=ollama) exit 0 -> **93/107 (87%)**, 응답 57/70, 거부 36/37, 함정 11/12, 오거부 4/70, MRR 0.976, 권한 14/14
   - `python src/ingest.py` EMBED=upstage -> 401. chroma_count 183 유지
 - **다음 것**:
-  - Upstage 키가 콘솔에서 invalid. 새 키가 없으면 ingest/retrieval/전체평가 경로가 닫혀 있다
-  - `eval/evaluate.py` 문항별 `llm...` 진행 로그는 워킹트리에만 있음 (미커밋)
-
-### 2026-08-31 [CU] Ollama 전체 평가 중단 + 세션 일시정지
-- **한 일**:
-  - 사규 26종 + 2차원 ACL + 골든셋 107은 워킹트리에 있음. 미커밋
-  - BGE 재색인 183청크, retrieval-only 92/107. Ollama 전체 평가는 N01 전에 사용자 요청으로 종료
-  - Upstage 키 `.env.local` 존재 확인 (값 미기록). ingest는 안 함
-  - 평가 python(PID 12712)만 종료. Chroma/`data/index`/Ollama 서버/Streamlit `:8501`은 그대로
-  - 사용자 요청으로 사규·ACL·골든셋·인덱스를 커밋. push는 안 함. `.env.local`과 에이전트 로컬 문서는 제외
-- **검증**:
-  - `Stop-Process` 후 `evaluate.py` 프로세스 0개. 터미널 exit `4294967295` (Windows 강제 종료)
-  - 평가 로그: `logs/` 비어 있음. 문항 채점 결과 없음
-  - retrieval-only: **92/107 (86%)**. 상세는 위 "현재 상태"
-- **다음 것**:
-  - 골든셋 LLM 전체 평가 수치가 없다. 2겹 효과는 미측정
-  - Upstage ingest는 BGE Chroma를 덮으므로 평가와 동시에 돌리면 안 되는 상태다
-  - 사규 이전·ACL·UI 변경은 이 커밋에 들어 있다. LLM 전체 평가 수치는 없다
-
-### 2026-08-31 [CU] 충분성 JSON 흡수 + 출처 카드 수정 + 인계 갱신
-- **한 일**:
-  - 2겹을 RAGFlow 형식(`ok` / `missing` / `use`) JSON으로 바꾸고, 불충분하면 거절로 닫음.
-    프롬프트는 §6 6대 블록. 근거 헤더는 `[문서명 / 섹션]` (예전 `[출처 N]`은 모델이 베낌)
-  - 인용 실패 시 답을 보여주지 않음. `OLLAMA_NUM_GPU`는 환경변수. streamlit 상한 제거
-  - 출처 카드 본문을 카드 안으로. 다크 테마에서 제목이 사라지던 것 수정.
-    최고 유사도·차단 청크·검색 방식을 사이드바 하단으로 이동
-  - 외부 자료 6건 검토. UI 프레임워크 교체와 재작성 루프는 적용하지 않음
-- **검증**:
-  - `python eval/test_citations.py` -> 자체 점검 통과 (6대 블록, `[출처 1]` 검출, RAGFlow 키 별칭, useful 필터)
-  - `python src/providers.py` -> `Ollama 서버 응답 / 모델 ['qwen2.5:7b'] / 사용 가능 True`,
-    모드 `온프렘 모드 · 로컬 BGE-M3 + Ollama · 외부 API 호출 없음`
-  - `ask('연차는 사용 며칠 전에 신청해야 하나요?','intern')` -> 답변
-    `[휴가 및 근태 규정 / 제2조 (연차 사용 신청)] (시행일 2026-03-01)`, `use`가 1번 청크만
-  - `ask('회사 창립기념일은 언제인가요?','intern')` -> 1겹 거부, 최고점 0.374 < 0.56
-  - `ask('야근 식대를 20시 이전에 사용하면 한도가 얼마인가요?','employee')` -> 1겹 통과(0.763) 후
-    2겹 거부, `missing: ['야근 식대 한도']`
-  - `python -m streamlit run app.py` -> HTTP 200. 브라우저에서 `.source-card` 4장 안에 조항 원문,
-    지표 3개가 `stSidebar` 안에 있음 (`inSidebar: true`)
-- **다음 것**:
-  - 골든셋 전체 LLM 평가(`evaluate.py` 기본 모드)가 없다. 2겹 효과의 정량 수치가 여기서 나온다
-  - 대기업 더미데이터 확대는 규모·권한모델 정의가 없어 코드로 들어가지 않은 상태다
-  - 발표 자료가 없고, 죽은 중복본 3건과 `docs/onprem_architecture.md`가 아직 있다
-
-### 2026-08-31 [CC] Streamlit 기동 복구 + alpha 측정 확정 + Ollama 판정 버그 수정
-- **한 일**:
-  - `streamlit 1.58 -> 1.56` 다운그레이드로 기동 복구. 1.57부터 tornado -> starlette 전환인데
-    `fastapi 0.115.6`이 `starlette<0.42`로 묶어 올릴 수 없었다. `requirements.txt`에 `<1.57` 핀
-  - **`providers._ollama_up()` 버그 수정**: `/api/tags`가 모델 0개여도 200을 주는데 이를
-    "준비됨"으로 봐서 `can_generate: True`를 **없는 능력으로 보고**하고 있었다.
-    설정된 모델 존재까지 확인하도록 `_ollama_ready()`로 교체하고 안내 문구를 행동 지시로 바꿈
-  - `eval/evaluate.py`에 **MRR**과 **분리도** 추가, `--alpha-scan` 명령 신설
-  - `ENSEMBLE_ALPHA` 0.5 -> **0.8** (개발셋 분리도 기준). 임계값도 재확정
-- **검증**:
-  - `python -m streamlit run app.py` -> **HTTP 200**, 로그에 traceback 없음
-  - 데모 시나리오 4단계 데이터 검증: 신입 연차 -> 답변(0.709), 신입 연봉밴드 -> **거부**(0.233),
-    인사팀 같은 질문 -> **답변**(0.648, confidential 1순위), 창립기념일 -> **거부**(0.347).
-    권한 차단 배지 19/19/0/9 정상
-  - `--alpha-scan` -> MRR은 모든 alpha에서 1.000(변별력 0), 분리도는 0.727(alpha 0) ->
-    0.836(alpha 0.8~1.0). 동점이라 BM25 신호를 남기는 0.8 선택
-  - `--compare` (alpha 0.8) -> 홀드아웃 19: dense 14, bm25 14, **ensemble 15**. 신뢰구간 겹침
-  - `permission_matrix.py bm25` -> 96조합 반례 0건 (회귀)
-  - `providers.py` 자체 점검 통과. 모델 0개 상태를 잡는 assert 추가
-  - **[미검증]** 화면 렌더링. 브라우저 확장 미연결 + playwright 미설치
-  - **[미검증]** LLM 생성 경로. Ollama 모델 0개
-- **다음 것**:
-  - `ollama pull qwen2.5:7b` 하나면 생성 경로가 처음 실행된다. 그 전까지 `src/answer.py`의
-    거부 2겹·3겹, 출처 표기, 인용 검증이 전부 미검증으로 남는다
-  - MRR 1.000은 **검색 순위가 병목이 아니라는 뜻**이다. 개선 여지는 전부 거부 레이어에 있다
-  - alpha 0.5가 홀드아웃에서 1문항 높았으나(16 vs 15) 홀드아웃으로 되고르지 않았다.
-    잡음 범위이고, 되고르면 홀드아웃이 아니게 된다
+  - Upstage 경로는 이후 세션에서 새 키로 완료됨 (위 항목)

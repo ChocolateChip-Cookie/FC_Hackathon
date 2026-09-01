@@ -130,8 +130,9 @@ BM25_SATURATION_K = 5.0
 # 이 값을 방식별로 따로 튜닝하지 않으면 3방식 비교가 무의미해진다
 # (한 방식에만 유리한 임계값으로 나머지를 재는 꼴이 된다).
 ABSTAIN_THRESHOLD = {
-    # bge 값은 개발셋 스윕으로 확정 (`evaluate.py --compare`). alpha=0.8 기준.
-    "bge":     {"dense": 0.56, "bm25": 0.47, "ensemble": 0.56},
+    # bge 107문항 골든셋, 개발 54 / 홀드아웃 53, alpha=0.8 (`evaluate.py --compare`).
+    # 구 40문항에서 온 ensemble 0.56 은 폐기.
+    "bge":     {"dense": 0.63, "bm25": 0.69, "ensemble": 0.63},
     # upstage 107문항 골든셋, 개발 54 / 홀드아웃 53, alpha=0.8 (`evaluate.py --compare`).
     "upstage": {"dense": 0.40, "bm25": 0.69, "ensemble": 0.46},
     "openai":  {"dense": 0.38, "bm25": 0.47, "ensemble": 0.34},   # 미측정. 스윕으로 확정할 것
