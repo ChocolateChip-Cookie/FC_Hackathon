@@ -276,7 +276,10 @@ bm25 는 백엔드 무관이므로 `BM25_THRESHOLD` 상수 하나로 전 백엔�
   - 발표자료 수치를 README 와 대조: `41/53` 만 README 에 없어 `config.py` 주석을 출처로 명시
   - `permission_matrix.py bm25` 895조합 반례 0, `providers.py`/`test_citations.py` 통과, em dash 0
 - **다음 것**:
-  - **Mermaid 와 이미지가 깃헙 웹에서 실제로 렌더링되는지 미확인.** 푸시 후 눈으로 봐야 한다
+  - ~~Mermaid/이미지 렌더링 미확인~~ -> **둘 다 깃헙에서 정상 렌더링 확인** (Playwright 로 실제 페이지 열어 스크린샷).
+    주의: `pre:has-text("flowchart")` 로 렌더링 실패를 판정하면 **틀린다.** 깃헙은 원본 `pre` 를
+    `render-plaintext-hidden` 으로 **숨기고** 다이어그램을 `iframe.render-viewer` 에 그린다.
+    올바른 판정은 `article.markdown-body iframe.render-viewer` 의 존재 여부다 (여기서는 2개)
   - 작업 중 `git reset --hard origin/main` 이 한 번 실행돼 미커밋 수정이 유실됐다.
     커밋 SHA 가 전부 바뀌었다(`7f4e293` -> `382c569`). 커밋된 것은 전부 무사
   - BGE+Ollama 전체 0.63 재실행, dense 전수 권한검사는 여전히 미실행
