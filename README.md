@@ -61,15 +61,15 @@ AX 실무 해커톤 **주제 01**: On-premise 환경 기반 RAG 서비스 구축
 
 ```mermaid
 flowchart TD
-    Q["질의 + 계정<br/>(소속 x 직책)"] --> P["권한 필터<br/>등급 x 부서 2차원"]
-    P -->|"권한 없는 청크는<br/>후보에서 제외"| R["검색<br/>dense + BM25 앙상블"]
-    R --> L1{"1겹<br/>최고 유사도 >= 임계값?"}
-    L1 -->|"아니오"| X1["거절<br/>LLM 호출 안 함 · 비용 0"]
-    L1 -->|"예"| L2{"2겹<br/>충분성 JSON ok?"}
-    L2 -->|"ok: false"| X2["거절<br/>missing 을 함께 표시"]
-    L2 -->|"ok: true"| L3{"3겹<br/>인용이 검색 결과에 있나?"}
-    L3 -->|"없는 출처"| X3["거절<br/>지어낸 인용 차단"]
-    L3 -->|"통과"| A["답변<br/>문서 / 조항 + 시행일"]
+    Q["질의 + 계정 · 소속 x 직책"] --> P["권한 필터<br/>등급 x 부서 2차원"]
+    P --> R["검색<br/>dense + BM25 앙상블"]
+    R --> L1{"1겹<br/>최고 유사도가 임계값 이상인가"}
+    L1 -- 아니오 --> X1["거절<br/>LLM 호출 안 함 · 비용 0"]
+    L1 -- 예 --> L2{"2겹<br/>충분성 JSON 의 ok 가 true 인가"}
+    L2 -- 아니오 --> X2["거절<br/>missing 을 함께 표시"]
+    L2 -- 예 --> L3{"3겹<br/>인용이 검색 결과 안에 있는가"}
+    L3 -- 아니오 --> X3["거절<br/>지어낸 인용 차단"]
+    L3 -- 예 --> A["답변<br/>문서 / 조항 + 시행일"]
 
     style X1 fill:#fdf1e3,stroke:#B45309
     style X2 fill:#fdf1e3,stroke:#B45309
@@ -96,16 +96,10 @@ flowchart TD
 
 ```mermaid
 flowchart LR
-    subgraph AX1["축 1 · 등급 (민감도)"]
-        C1["public"] --- C2["internal"] --- C3["confidential"]
-    end
-    subgraph AX2["축 2 · 공유 범위"]
-        S1["전사 all"] --- S2["부서 한정 dept<br/>+ 직책 예외"]
-    end
-    AX1 --> V{"visible()"}
-    AX2 --> V
-    V --> OK["검색 후보에 포함"]
-    V --> NO["후보에서 제외<br/>LLM 프롬프트에 오르지 않음"]
+    C["축 1 · 등급<br/>public / internal / confidential"] --> V{"visible"}
+    S["축 2 · 공유 범위<br/>전사 all / 부서 한정 dept + 직책 예외"] --> V
+    V -- 통과 --> OK["검색 후보에 포함"]
+    V -- 차단 --> NO["후보에서 제외<br/>LLM 프롬프트에 오르지 않음"]
 
     style NO fill:#eceaf5,stroke:#1E1B4B
     style OK fill:#e8f5ee,stroke:#059669
