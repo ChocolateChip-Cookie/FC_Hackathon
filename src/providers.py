@@ -101,10 +101,15 @@ def gen_backend() -> str:
 
 
 def index_ready(backend: str) -> bool:
-    """그 백엔드의 인덱스가 실제로 있는지. 없으면 dense 검색이 불가능하다."""
+    """그 백엔드의 **자기 벡터**가 있는지. 없으면 dense 검색이 불가능하다.
+
+    CHROMA_DIR 존재 여부로 판단하면 안 된다. store.restore_from_prebuilt 는 요청한
+    backend 의 npz 가 없을 때 다른 npz 로 **코퍼스만** 복원한다(BM25 용). 그때 적재된
+    벡터는 다른 임베딩 공간의 것이라 dense 에 쓰면 결과가 조용히 쓰레기가 된다.
+    """
     if backend == "none":
         return False
-    return (INDEX_DIR / f"{backend}.npz").exists() or CHROMA_DIR.exists()
+    return (INDEX_DIR / f"{backend}.npz").exists()
 
 
 def capabilities() -> dict:

@@ -79,7 +79,16 @@ def restore_from_prebuilt(backend: str) -> int:
 
     path = INDEX_DIR / f"{backend}.npz"
     if not path.exists():
-        return 0
+        # 요청한 backend 의 인덱스가 없다. 그래도 **코퍼스는 복원해야 한다.**
+        # BM25 는 벡터를 쓰지 않고 문서 텍스트만 쓰기 때문이다. 여기서 포기하면
+        # 갓 클론한 사람이 키 없이 BM25 만 쓰려 할 때 컬렉션이 빈 채로 남고
+        # 모든 질의가 "근거 없음"으로 거부된다. 실제로 그랬다.
+        # 아무 npz 나 골라 텍스트만 살린다. 벡터는 다른 공간의 것이므로
+        # dense 에 쓰면 안 되고, index_ready() 가 그 backend 의 dense 를 막는다.
+        fallback = sorted(INDEX_DIR.glob("*.npz"))
+        if not fallback:
+            return 0
+        path = fallback[0]
     z = np.load(path, allow_pickle=False)
     chunks = json.loads(str(z["meta"]))
     return build(chunks, z["vectors"])
