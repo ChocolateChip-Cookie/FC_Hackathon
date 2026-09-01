@@ -129,15 +129,22 @@ BM25_SATURATION_K = 5.0
 # 임베딩 백엔드와 검색 방식마다 점수 분포가 다르므로 (백엔드, 방식) 조합마다 값이 다르다.
 # 이 값을 방식별로 따로 튜닝하지 않으면 3방식 비교가 무의미해진다
 # (한 방식에만 유리한 임계값으로 나머지를 재는 꼴이 된다).
+# BM25 점수는 임베딩 백엔드와 **무관하다**. bm25 모드의 검색 결과는 어떤 임베딩을 쓰든
+# 완전히 동일하므로 임계값도 하나여야 한다. 백엔드마다 따로 적어두면 한쪽만 스윕하고
+# 나머지를 잊는 사고가 난다. 실제로 그랬다: bge/upstage 만 0.69 로 올리고 none/hash/openai 는
+# 0.47 에 남아, **키가 하나도 없는 사용자만 함정 12건 중 3건밖에 거부하지 못했다**
+# (0.69 면 10/12, 정답률 76/107 -> 90/107). 그래서 한 곳에서만 정한다.
+BM25_THRESHOLD = 0.69   # 107문항 개발셋 스윕값
+
 ABSTAIN_THRESHOLD = {
     # bge 107문항 골든셋, 개발 54 / 홀드아웃 53, alpha=0.8 (`evaluate.py --compare`).
     # 구 40문항에서 온 ensemble 0.56 은 폐기.
-    "bge":     {"dense": 0.63, "bm25": 0.69, "ensemble": 0.63},
+    "bge":     {"dense": 0.63, "bm25": BM25_THRESHOLD, "ensemble": 0.63},
     # upstage 107문항 골든셋, 개발 54 / 홀드아웃 53, alpha=0.8 (`evaluate.py --compare`).
-    "upstage": {"dense": 0.40, "bm25": 0.69, "ensemble": 0.46},
-    "openai":  {"dense": 0.38, "bm25": 0.47, "ensemble": 0.34},   # 미측정. 스윕으로 확정할 것
-    "hash":    {"dense": 0.11, "bm25": 0.47, "ensemble": 0.20},
-    "none":    {"dense": 0.00, "bm25": 0.47, "ensemble": 0.00},   # 임베딩 키 없음. bm25 만 유효
+    "upstage": {"dense": 0.40, "bm25": BM25_THRESHOLD, "ensemble": 0.46},
+    "openai":  {"dense": 0.38, "bm25": BM25_THRESHOLD, "ensemble": 0.34},  # dense 미측정
+    "hash":    {"dense": 0.11, "bm25": BM25_THRESHOLD, "ensemble": 0.20},
+    "none":    {"dense": 0.00, "bm25": BM25_THRESHOLD, "ensemble": 0.00},  # 임베딩 없음. bm25 만 유효
 }
 
 # ---------- 모델 ----------

@@ -43,7 +43,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 이 절에는 **컨텍스트 문서에 없는, 이 리포에만 해당하는 사항**만 남긴다.
 
-- 더미 사규: `data/policies/` (7문서 32청크). **가상의 회사**이며 문서 상단과 README에 명시한다
+- 더미 사규: `data/policies/` (26문서 183청크, live 179). 가상 기업 **한성산업**이며
+  문서 front matter와 README에 명시한다
 - On-premise 설계 문서(필수 산출물 B): `docs/onprem-design.md`
 - 아래 §4(신뢰도)·§5(보안)가 평가 축 3개 중 뒤의 둘에 직접 대응한다
 
@@ -380,21 +381,29 @@ estimated_cost_usd, avg_retrieval_score, answer_length, cache_hit
 > 이 절은 사실만 적는다. 확인하지 않은 것은 "미검증"으로 남긴다.
 
 **검증된 것** (명령을 실제로 돌려 확인함)
-- 더미 사규 7문서, `## 제N조` 헤딩 단위로 32청크. 등급 분포 public 13 / internal 10 / confidential 9.
-- **권한 필터 전수 검사 통과**: 청크 32 x 역할 3 = 96조합, 반례 0건.
-  intern 19차단 / employee 9차단 / hr 0차단으로 등급 분포와 정확히 일치.
-  dense(chroma `where` 경로)와 bm25 양쪽 모두 통과.
-- **검색 방식 3종 비교** 골든셋 40문항(normal 20 / trap 15 / permission 5).
-  개발셋 21문항으로 임계값 튜닝 -> 홀드아웃 19문항 보고 (alpha 0.8):
-  dense 14/19, bm25 14/19, **ensemble 15/19**. 세 방식의 신뢰구간이 겹치므로
-  "ensemble이 낫다"고 단정하지 않는다. MRR은 세 방식 모두 1.000.
+
+> 2026-09-01 코퍼스 마이그레이션 이후 값이다. 그 이전 수치(7문서 32청크, 골든셋 40문항,
+> `intern` 역할, 임계값 0.56)는 **전부 폐기됐다.** git 히스토리에만 남는다.
+
+- 더미 사규 **26문서 183청크**(live 179, superseded 4 제외), `## 제N조` 헤딩 단위.
+  등급 분포 public 90 / internal 46 / confidential 43.
+- **권한 필터 전수 검사 통과**: live 179 x 페르소나 5 = **895조합, 반례 0건** (bm25 경로).
+  페르소나는 `config.USERS` (dev / dev_lead / hr / fin / audit).
+  차단 수 54 / 48 / 36 / 41 / 48. dense 경로 전수는 이 코퍼스 이후 미실행.
+- **검색 방식 3종 비교** 골든셋 **107문항**.
+  유형 축: normal 54 / dept 24 / permission 14 / trap 12 / conflict 3.
+  기대 축: answer 70 / abstain 37. **두 축은 같은 107을 다르게 나눈 것이다.**
+  개발 54 / 홀드아웃 53 (유형 축으로 층화). BGE alpha 0.8:
+  dense 48/53, bm25 41/53, **ensemble 49/53**. 신뢰구간이 겹치므로 우열을 단정하지 않는다.
+- **BM25 임계값은 백엔드와 무관하다.** `config.BM25_THRESHOLD` 한 곳에서만 정한다.
+  백엔드별로 적어두었더니 bge/upstage만 0.69로 올리고 나머지가 0.47에 남아,
+  **키 0개 사용자만 함정 12건 중 3건밖에 거부하지 못했다** (0.69면 10/12).
 - **제공자 능력 매트릭스** (`python src/providers.py` 자체 점검 통과):
   앤트로픽만 -> bm25 전용 / 키 0개 -> bm25 전용 / upstage·openai -> 3방식 전부.
-  현재 이 머신: embed `bge`, gen `ollama` (`qwen2.5:7b`), `onprem: True`.
 - `.env.local`이 `.gitignore`에 걸림 (`git check-ignore -v`로 확인).
-- **LLM 생성 경로 실행됨** (Ollama CPU, `OLLAMA_NUM_GPU=0`).
-  신입 연차 신청 -> 출처·시행일 표기된 답. 창립기념일 -> 1겹 거부(0.374 < 0.56).
-  G36 야근 식대 한도 -> 1겹 통과(0.763) 후 2겹 JSON 거부 (`missing: ['야근 식대 한도']`).
+- **LLM 생성 경로 실행됨** (Ollama CPU, `OLLAMA_NUM_GPU=0`, `qwen2.5:7b`).
+  거부 3겹이 층을 이루는 것 확인: 1겹(임계값 미달), 2겹(충분성 JSON `ok:false`),
+  3겹(인용 대조). 전체 평가 BGE+Ollama 93/107은 **당시 임계값 0.56 기준**이다.
 - **UI**: `python -m streamlit run app.py` HTTP 200. 사이드바 모드 라벨 표시.
   출처 카드 안에 조항 원문. 지표 3개는 사이드바 하단.
 

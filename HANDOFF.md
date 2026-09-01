@@ -41,8 +41,8 @@
 - **목표**: AX 해커톤 주제 01 / Case 1, 가상 기업 **한성산업** 사내 온보딩 RAG 챗봇.
   **상위 제약은 `CLAUDE-hackathon-context.md`이며 `CLAUDE.md`가 이를 `@import` 한다.**
   배포하지 않는다. 깃헙에서 내려받아 로컬 실행하는 데모다.
-- **브랜치**: `main`. origin과 동기화됨 (`a0b4270`까지 push 완료).
-  **이번 커밋**에서 BGE 임계값 0.63 + README + HANDOFF 정리가 반영된다.
+- **브랜치**: `main`. origin과 동기화됨.
+  `1868326`(BGE 0.63 + 인계), `f3d14f8`(README 심사축 재구성)까지 push 완료.
 
 ### 코퍼스·평가셋 (2026-08-31~09-01 마이그레이션 완료)
 
@@ -53,7 +53,8 @@
 | 등급 분포 | public 90 / internal 46 / confidential 43 (live 기준) |
 | 권한 모델 | **2차원 ACL**: 등급 × 부서·직책. `config.visible()` 단일 판정 |
 | 골든셋 | **107문항** (`eval/golden_set.json`). 구 40문항은 `eval/golden_set_v1_legacy.json` |
-| 골든셋 구성 | normal 70 / abstain 37 / trap 12 / permission 14 / conflict 3 |
+| 골든셋 구성 (유형) | normal 54 / **dept 24** / permission 14 / trap 12 / conflict 3 = 107 |
+| 골든셋 구성 (기대) | answer 70 / abstain 37 = 107. **유형 축과 더하지 말 것** |
 | 홀드아웃 분리 | 개발 54 / 홀드아웃 53 (`evaluate.py --compare`) |
 
 ### RAG 정확도 측정: **핵심 테스트는 완료**
@@ -113,7 +114,9 @@ live 179 × 페르소나 5 = **895조합, 반례 0**. dense 경로 전수는 이
 |---|---|
 | `6ebe03c` | 사규 26종 + 2D ACL + 골든셋 107 + bge.npz + UI/eval 확장 |
 | `a0b4270` | Upstage 수치 README, 429 재시도, upstage.npz, upstage 임계값 0.46 |
-| **(이번)** | BGE 0.63 `config.py` + README + HANDOFF 클로드코드 인계 |
+| `1868326` | BGE 0.63 `config.py` + HANDOFF 클로드코드 인계 |
+| `f3d14f8` | README 심사 축 재구성 + 데모 시나리오 실측 |
+| **(이번)** | 코드리뷰 지적 7건 수정. `BM25_THRESHOLD` 통일이 유일한 런타임 변경 |
 
 ### 미완 / 선택 (RAG 측정과 별개)
 
@@ -253,6 +256,35 @@ live 179 × 페르소나 5 = **895조합, 반례 0**. dense 경로 전수는 이
 >
 > - `[미검증]`은 위반이 아니고 비용도 0이다. **실행하지 않은 검증을 적는 것만이 위반이다.**
 > - "다음 것"은 명령형이 아니라 **상태 서술형**으로 쓴다.
+
+### 2026-09-01 [CC] 코드리뷰 지적 7건 수정 (bm25 임계값 드리프트가 실제 버그였다)
+- **한 일**:
+  - **`config.BM25_THRESHOLD` 신설.** BM25 점수는 임베딩 백엔드와 무관한데 임계값이
+    백엔드별로 갈려 있었다. bge/upstage만 0.69로 올리고 openai/hash/none은 0.47에 남아
+    **키 0개 사용자만 함정을 못 거부하고 있었다.** 한 상수에서만 정하도록 바꿈
+  - README 골든셋 구성 정정: `expect` 축과 `kind` 축을 섞어 합이 136이었다.
+    **`dept` 24문항(22%)이 두 문서 어디에도 없었다.** 두 축을 분리해 표로
+  - README Upstage 행 재현 명령 정정: 맨몸 `evaluate.py`는 `providers`가 로컬을 우선해
+    `embed: bge / gen: ollama`로 풀린다. `$env:` 두 개를 명시
+  - README 최상단 명령을 bash 문법에서 PowerShell 문법으로 (`CLAUDE.md` §12 위반이었다)
+  - README 데모 표에 **측정 조건(BGE / 0.63)** 명시. 백엔드마다 임계값이 다르다
+  - **`CLAUDE.md` §11 갱신.** 매 턴 `@import`되면서 7문서/32청크/40문항/`intern`/0.56 같은
+    폐기된 값을 "검증된 것"으로 주장하고 있었다
+  - HANDOFF 자기 커밋 정보 정정 (`a0b4270`까지 -> `f3d14f8`까지, "이번 커밋" 1개 -> 2개였음)
+- **검증**:
+  - 수정 전후 실측 (`EMBED_BACKEND=none`, bm25, 107문항):
+    ```
+    임계값 0.47 (수정 전 키 0개가 받던 값): 정답률 76/107  함정거부  3/12  거부정확도 12/37
+    임계값 0.69 (수정 후 전 백엔드 공통):   정답률 90/107  함정거부 10/12  거부정확도 34/37
+    ```
+  - `ABSTAIN_THRESHOLD` 전 백엔드 `bm25: 0.69` 확인
+  - 골든셋 실제 분포 확인: kind 합 107, expect 합 107 (README 표기와 일치)
+  - `providers.embed_backend()/gen_backend()` -> `bge` / `ollama` (재현 명령 지적이 사실)
+  - em dash 0건
+- **다음 것**:
+  - dense 경로 전수 검사(`permission_matrix.py dense`)는 이 코퍼스에서 미실행
+  - BGE+Ollama 전체를 0.63으로 재실행 안 함(~50분). README에 "0.56 기준" 라벨 유지
+  - 발표 슬라이드 없음. README 상단 3개 절이 슬라이드 뼈대가 되도록 구성돼 있음
 
 ### 2026-09-01 [CC] README를 심사 축 기준으로 재구성 + 데모 시나리오 실측
 - **한 일**:
