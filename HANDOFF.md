@@ -41,7 +41,7 @@
 - **목표**: AX 해커톤 주제 01 / Case 1, 가상 기업 **한성산업** 사내 온보딩 RAG 챗봇.
   **상위 제약은 `CLAUDE-hackathon-context.md`이며 `CLAUDE.md`가 이를 `@import` 한다.**
   배포하지 않는다. 깃헙에서 내려받아 로컬 실행하는 데모다.
-- **브랜치**: `main`. origin과 동기화됨. `09f4ca6`(Mermaid 렌더 확인)까지 push 완료.
+- **브랜치**: `main`. origin과 동기화됨. `df24de9`까지 push 완료. 작업 트리 clean.
 
 ### 코퍼스·평가셋 (2026-08-31~09-01 마이그레이션 완료)
 
@@ -105,6 +105,8 @@ bm25 는 백엔드 무관이므로 `BM25_THRESHOLD` 상수 하나로 전 백엔�
 | HTTP 429 재시도 | `src/embeddings.py`, `src/llm.py` (최대 6회 exponential backoff) |
 | 평가 진행 로그 | `eval/evaluate.py` 문항별 `llm...` / `skip-llm` 출력 |
 | Streamlit | `app.py`. 역할×소속 2D UI. 사이드바 `providers.mode_label()` |
+| README 도판 | `docs/assets/` 4개: `demo-permission.png`(실제 화면) + **손으로 쓴 SVG 3장** |
+| 도판 색 규약 | `DESIGN.md` §2.4 어두운 배경 팔레트. 액센트만 `#0066cc` -> `#2dd4bf` |
 | 관측성 | Phoenix, `logs/` JSON Lines 스키마 **미착수** |
 | LLM-as-a-Judge | **미착수** (로드맵 8단계) |
 
@@ -119,7 +121,8 @@ bm25 는 백엔드 무관이므로 `BM25_THRESHOLD` 상수 하나로 전 백엔�
 | `3bfab38` `382c569` | 코드리뷰 7건 + `BM25_THRESHOLD` 통일, 홀드아웃으로 0.66 재선택 |
 | `6378f1b` | UI `KeyError` 수정 (답변이 나오는 모든 질문이 죽어 있었다) |
 | `8796a95` `00f3437` `09f4ca6` | 데모 스크린샷 + Mermaid 2개 + `docs/presentation.md` |
-| **(이번)** | README 정리: 모순 1건 제거 + 반복 3종 삭제 + 두괄식 재배치. 코드 변경 0 |
+| `ee5692d` `fbe6996` | 다이어그램을 기제 중심으로 재작성 (LLM 경계, 권한 판정 행렬) |
+| `f540a4d` `df24de9` | **mermaid -> 손으로 쓴 SVG 3장**. `docs/assets/*.svg`. 코드 변경 0 |
 
 ### 미완 / 선택 (RAG 측정과 별개)
 
