@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 470" width="1000" height="470"
+     role="img" aria-label="인사기획팀 계정 기준 권한 격자. 세로축은 문서 등급, 가로축은 소관 부서. confidential 행에서 소관이 인사기획팀인 문서는 열람되고 소관이 감사팀인 문서는 차단된다. 등급 한 축만 보는 모델은 그 두 칸을 구분할 수 없다.">
+  <rect width="1000" height="470" fill="#0f1620"/>
+  <rect x="0.5" y="0.5" width="999" height="469" fill="none" stroke="#2a3646"/>
+
+  <text x="28" y="38" font-family="system-ui, sans-serif" font-size="15" font-weight="600" fill="#c9d3e0">권한은 두 축이다 · 인사기획팀 사원 계정 기준</text>
+  <text x="28" y="60" font-family="system-ui, sans-serif" font-size="12.5" fill="#7d8b9e">맨 아랫줄 두 칸을 보라. 등급이 같은데 결과가 갈린다. 가로축이 없으면 생길 수 없는 차이다.</text>
+
+  <!-- 가로축 머리 -->
+  <text x="470" y="106" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12.5" fill="#c9d3e0">소관이 전사 또는 인사기획팀</text>
+  <text x="778" y="106" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12.5" fill="#c9d3e0">소관이 다른 부서</text>
+  <line x1="320" y1="118" x2="944" y2="118" stroke="#2a3646"/>
+
+  <!-- 세로축 머리 -->
+  <text x="150" y="86" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11.5" fill="#7d8b9e">등급 (축 1)</text>
+  <text x="632" y="86" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11.5" fill="#7d8b9e">소관 부서 (축 2)</text>
+
+  <!-- 행 1 · public -->
+  <text x="300" y="166" text-anchor="end" font-family="ui-monospace, Consolas, monospace" font-size="12" fill="#c9d3e0">public</text>
+  <text x="300" y="184" text-anchor="end" font-family="system-ui, sans-serif" font-size="10.5" fill="#7d8b9e">전사 공개</text>
+
+  <rect x="320" y="134" width="300" height="68" fill="#132420" stroke="#2dd4bf"/>
+  <text x="336" y="158" font-family="ui-monospace, Consolas, monospace" font-size="11" fill="#2dd4bf">HR-2026-101</text>
+  <text x="336" y="176" font-family="system-ui, sans-serif" font-size="12" fill="#c9d3e0">복무규정</text>
+  <text x="604" y="194" text-anchor="end" font-family="system-ui, sans-serif" font-size="11.5" fill="#2dd4bf">열람</text>
+
+  <rect x="644" y="134" width="300" height="68" fill="#132420" stroke="#2dd4bf"/>
+  <text x="660" y="158" font-family="ui-monospace, Consolas, monospace" font-size="11" fill="#2dd4bf">SEC-2026-501</text>
+  <text x="660" y="176" font-family="system-ui, sans-serif" font-size="12" fill="#c9d3e0">정보보안 기본정책</text>
+  <text x="928" y="194" text-anchor="end" font-family="system-ui, sans-serif" font-size="11.5" fill="#2dd4bf">열람</text>
+
+  <!-- 행 2 · internal -->
+  <text x="300" y="252" text-anchor="end" font-family="ui-monospace, Consolas, monospace" font-size="12" fill="#c9d3e0">internal</text>
+  <text x="300" y="270" text-anchor="end" font-family="system-ui, sans-serif" font-size="10.5" fill="#7d8b9e">사내 한정</text>
+
+  <rect x="320" y="220" width="300" height="68" fill="#132420" stroke="#2dd4bf"/>
+  <text x="336" y="244" font-family="ui-monospace, Consolas, monospace" font-size="11" fill="#2dd4bf">HR-2026-105</text>
+  <text x="336" y="262" font-family="system-ui, sans-serif" font-size="12" fill="#c9d3e0">인사규정</text>
+  <text x="604" y="280" text-anchor="end" font-family="system-ui, sans-serif" font-size="11.5" fill="#2dd4bf">열람</text>
+
+  <rect x="644" y="220" width="300" height="68" fill="#1c1a24" stroke="#7d8b9e"/>
+  <text x="660" y="244" font-family="ui-monospace, Consolas, monospace" font-size="11" fill="#c9d3e0">SAF-2026-801</text>
+  <text x="660" y="262" font-family="system-ui, sans-serif" font-size="12" fill="#c9d3e0">안전보건관리규정</text>
+  <text x="928" y="280" text-anchor="end" font-family="system-ui, sans-serif" font-size="11.5" fill="#7d8b9e">차단</text>
+  <text x="660" y="280" font-family="system-ui, sans-serif" font-size="10" fill="#7d8b9e">대외비가 아닌데도 막힌다</text>
+
+  <!-- 행 3 · confidential -->
+  <text x="300" y="338" text-anchor="end" font-family="ui-monospace, Consolas, monospace" font-size="12" fill="#c9d3e0">confidential</text>
+  <text x="300" y="356" text-anchor="end" font-family="system-ui, sans-serif" font-size="10.5" fill="#7d8b9e">대외비</text>
+
+  <rect x="320" y="306" width="300" height="68" fill="#132420" stroke="#2dd4bf" stroke-width="1.6"/>
+  <text x="336" y="330" font-family="ui-monospace, Consolas, monospace" font-size="11" fill="#2dd4bf">HR-2026-106</text>
+  <text x="336" y="348" font-family="system-ui, sans-serif" font-size="12" fill="#c9d3e0">인사평가 시행세칙</text>
+  <text x="604" y="366" text-anchor="end" font-family="system-ui, sans-serif" font-size="11.5" fill="#2dd4bf">열람</text>
+
+  <rect x="644" y="306" width="300" height="68" fill="#241a1c" stroke="#d98a3d" stroke-width="1.6"/>
+  <text x="660" y="330" font-family="ui-monospace, Consolas, monospace" font-size="11" fill="#d98a3d">AUD-2026-871</text>
+  <text x="660" y="348" font-family="system-ui, sans-serif" font-size="12" fill="#c9d3e0">내부감사규정</text>
+  <text x="928" y="366" text-anchor="end" font-family="system-ui, sans-serif" font-size="11.5" fill="#d98a3d">차단</text>
+
+  <!-- 아랫줄 강조 -->
+  <line x1="320" y1="392" x2="944" y2="392" stroke="#d98a3d" stroke-dasharray="4 4"/>
+  <text x="632" y="416" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12.5" fill="#d98a3d">같은 등급 · 다른 결과</text>
+  <text x="632" y="438" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11.5" fill="#7d8b9e">등급 한 축만 보는 모델은 이 두 칸에 같은 답을 낼 수밖에 없다. 소관이 판정에 들어가야 갈린다.</text>
+</svg>

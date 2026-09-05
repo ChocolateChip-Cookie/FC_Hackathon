@@ -1,0 +1,119 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1240 600" width="1240" height="600"
+     role="img" aria-label="질의가 권한 필터와 검색을 거쳐 거부 3겹을 통과하는 경로. 1겹은 LLM 호출 밖에서 끝나고 비용이 0이며, 2겹과 3겹은 LLM 호출 한 번 안에서 끝난다.">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,1 L9,5 L0,9 z" fill="#7d8b9e"/>
+    </marker>
+    <marker id="at" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,1 L9,5 L0,9 z" fill="#2dd4bf"/>
+    </marker>
+    <marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,1 L9,5 L0,9 z" fill="#d98a3d"/>
+    </marker>
+  </defs>
+
+  <rect width="1240" height="600" fill="#0f1620"/>
+  <rect x="0.5" y="0.5" width="1239" height="599" fill="none" stroke="#2a3646"/>
+
+  <text x="28" y="38" font-family="system-ui, sans-serif" font-size="15" font-weight="600" fill="#c9d3e0">거부 3겹 · 질의 하나가 지나는 길</text>
+  <text x="28" y="60" font-family="system-ui, sans-serif" font-size="12.5" fill="#7d8b9e">점선 상자가 LLM 호출 1회다. 1겹의 이탈선은 그 밖으로 나간다.</text>
+
+  <!-- 질의 -->
+  <rect x="28" y="196" width="150" height="58" fill="none" stroke="#2a3646"/>
+  <text x="103" y="220" text-anchor="middle" font-family="system-ui, sans-serif" font-size="13" fill="#c9d3e0">질의 + 계정</text>
+  <text x="103" y="239" text-anchor="middle" font-family="ui-monospace, Consolas, monospace" font-size="11" fill="#7d8b9e">소속 x 직책</text>
+  <line x1="178" y1="225" x2="222" y2="225" stroke="#7d8b9e" stroke-width="1.2" marker-end="url(#a)"/>
+
+  <!-- 권한 필터 -->
+  <rect x="228" y="190" width="164" height="70" fill="#161f2b" stroke="#2dd4bf"/>
+  <text x="310" y="213" text-anchor="middle" font-family="system-ui, sans-serif" font-size="13" fill="#2dd4bf">권한 필터</text>
+  <text x="310" y="232" text-anchor="middle" font-family="ui-monospace, Consolas, monospace" font-size="10.5" fill="#c9d3e0">config.visible()</text>
+  <text x="310" y="249" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10.5" fill="#7d8b9e">179 &#8594; 열람 가능분</text>
+
+  <!-- 병렬 분기 -->
+  <line x1="392" y1="225" x2="422" y2="225" stroke="#7d8b9e" stroke-width="1.2"/>
+  <line x1="422" y1="150" x2="422" y2="300" stroke="#7d8b9e" stroke-width="1.2"/>
+  <line x1="422" y1="150" x2="460" y2="150" stroke="#7d8b9e" stroke-width="1.2" marker-end="url(#a)"/>
+  <line x1="422" y1="300" x2="460" y2="300" stroke="#7d8b9e" stroke-width="1.2" marker-end="url(#a)"/>
+
+  <rect x="466" y="122" width="176" height="56" fill="none" stroke="#2a3646"/>
+  <text x="554" y="145" text-anchor="middle" font-family="ui-monospace, Consolas, monospace" font-size="11.5" fill="#c9d3e0">dense</text>
+  <text x="554" y="163" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" fill="#7d8b9e">ChromaDB · BGE-M3</text>
+
+  <rect x="466" y="272" width="176" height="56" fill="none" stroke="#2a3646"/>
+  <text x="554" y="295" text-anchor="middle" font-family="ui-monospace, Consolas, monospace" font-size="11.5" fill="#c9d3e0">BM25</text>
+  <text x="554" y="313" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" fill="#7d8b9e">kiwipiepy 형태소</text>
+
+  <!-- 수렴 -->
+  <line x1="642" y1="150" x2="678" y2="150" stroke="#7d8b9e" stroke-width="1.2"/>
+  <line x1="642" y1="300" x2="678" y2="300" stroke="#7d8b9e" stroke-width="1.2"/>
+  <line x1="678" y1="150" x2="678" y2="300" stroke="#7d8b9e" stroke-width="1.2"/>
+  <line x1="678" y1="225" x2="716" y2="225" stroke="#7d8b9e" stroke-width="1.2" marker-end="url(#a)"/>
+  <text x="697" y="216" text-anchor="middle" font-family="ui-monospace, Consolas, monospace" font-size="10" fill="#7d8b9e">alpha 0.8</text>
+
+  <!-- 1겹 -->
+  <rect x="722" y="192" width="150" height="66" fill="#161f2b" stroke="#2dd4bf"/>
+  <text x="797" y="215" text-anchor="middle" font-family="system-ui, sans-serif" font-size="13" fill="#2dd4bf">1겹 · 임계값</text>
+  <text x="797" y="233" text-anchor="middle" font-family="ui-monospace, Consolas, monospace" font-size="11" fill="#c9d3e0">max &gt;= 0.63</text>
+  <text x="797" y="250" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10.5" fill="#7d8b9e">LLM 호출 전</text>
+
+  <!-- 1겹 이탈: 점선 상자 밖으로 -->
+  <line x1="797" y1="192" x2="797" y2="117" stroke="#d98a3d" stroke-width="1.4"/>
+  <line x1="797" y1="117" x2="1004" y2="117" stroke="#d98a3d" stroke-width="1.4" marker-end="url(#ao)"/>
+  <text x="812" y="108" font-family="ui-monospace, Consolas, monospace" font-size="10" fill="#d98a3d">아니오 · 0.532 &lt; 0.63</text>
+
+  <rect x="1010" y="90" width="202" height="54" fill="none" stroke="#d98a3d"/>
+  <text x="1111" y="112" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12.5" fill="#d98a3d">거절 · LLM 미호출</text>
+  <text x="1111" y="130" text-anchor="middle" font-family="ui-monospace, Consolas, monospace" font-size="10.5" fill="#7d8b9e">비용 0 · 0.2~3초</text>
+
+  <!-- 예 라벨은 점선 상자 밖에 둔다 -->
+  <line x1="872" y1="225" x2="894" y2="225" stroke="#7d8b9e" stroke-width="1.2"/>
+  <text x="883" y="217" text-anchor="middle" font-family="ui-monospace, Consolas, monospace" font-size="10" fill="#7d8b9e">예</text>
+
+  <!-- LLM 호출 경계 -->
+  <rect x="900" y="170" width="320" height="340" fill="#131c27" stroke="#7d8b9e" stroke-dasharray="5 4"/>
+  <text x="1060" y="192" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11.5" fill="#7d8b9e">LLM 호출 1회 · 35~110초</text>
+  <line x1="894" y1="225" x2="998" y2="225" stroke="#7d8b9e" stroke-width="1.2" marker-end="url(#a)"/>
+
+  <!-- 2겹 -->
+  <rect x="1004" y="206" width="192" height="52" fill="none" stroke="#2a3646"/>
+  <text x="1100" y="227" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12.5" fill="#c9d3e0">2겹 · 충분성 판정</text>
+  <text x="1100" y="245" text-anchor="middle" font-family="ui-monospace, Consolas, monospace" font-size="10.5" fill="#7d8b9e">ok / missing / use</text>
+
+  <!-- 2겹 -> 거절 -->
+  <line x1="1004" y1="240" x2="950" y2="240" stroke="#d98a3d" stroke-width="1.2"/>
+  <line x1="950" y1="240" x2="950" y2="304" stroke="#d98a3d" stroke-width="1.2" marker-end="url(#ao)"/>
+  <text x="958" y="278" font-family="ui-monospace, Consolas, monospace" font-size="10" fill="#d98a3d">ok:false</text>
+
+  <!-- 2겹 -> 3겹 -->
+  <line x1="1100" y1="258" x2="1100" y2="304" stroke="#7d8b9e" stroke-width="1.2" marker-end="url(#a)"/>
+  <text x="1108" y="284" font-family="ui-monospace, Consolas, monospace" font-size="10" fill="#7d8b9e">ok:true</text>
+
+  <!-- 거절 (호출 안에서) -->
+  <rect x="908" y="310" width="84" height="52" fill="none" stroke="#d98a3d"/>
+  <text x="950" y="332" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12.5" fill="#d98a3d">거절</text>
+  <text x="950" y="350" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#7d8b9e">근거 부족</text>
+
+  <!-- 3겹 -->
+  <rect x="1004" y="310" width="192" height="52" fill="none" stroke="#2a3646"/>
+  <text x="1100" y="331" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12.5" fill="#c9d3e0">3겹 · 인용 대조</text>
+  <text x="1100" y="349" text-anchor="middle" font-family="ui-monospace, Consolas, monospace" font-size="10.5" fill="#7d8b9e">_validate_citations()</text>
+
+  <!-- 3겹 -> 거절 -->
+  <line x1="1004" y1="336" x2="998" y2="336" stroke="#d98a3d" stroke-width="1.2" marker-end="url(#ao)"/>
+  <text x="1004" y="382" font-family="ui-monospace, Consolas, monospace" font-size="10" fill="#d98a3d">없는 출처</text>
+
+  <!-- 3겹 -> 답변 -->
+  <line x1="1100" y1="362" x2="1100" y2="424" stroke="#2dd4bf" stroke-width="1.4" marker-end="url(#at)"/>
+  <text x="1108" y="400" font-family="ui-monospace, Consolas, monospace" font-size="10" fill="#7d8b9e">통과</text>
+
+  <!-- 답변 -->
+  <rect x="1004" y="430" width="192" height="52" fill="#132420" stroke="#2dd4bf"/>
+  <text x="1100" y="451" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12.5" fill="#2dd4bf">답변</text>
+  <text x="1100" y="469" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10.5" fill="#c9d3e0">문서 / 조항 + 시행일</text>
+
+  <!-- 하단 타임라인 -->
+  <line x1="28" y1="536" x2="1212" y2="536" stroke="#2a3646"/>
+  <text x="28" y="560" font-family="ui-monospace, Consolas, monospace" font-size="11" fill="#7d8b9e">권한 필터 &#8594; 검색 0.2s &#8594; 1겹 &#8594; [ 여기서 끝나면 비용 0 ] &#8594; LLM 1회 35~110s &#8594; 2겹 &#8594; 3겹 &#8594; 답변</text>
+  <text x="28" y="580" font-family="system-ui, sans-serif" font-size="11" fill="#7d8b9e">거절은 세 지점 어디서나 일어난다. 셋 다 지어낸 답을 내보내지 않는다는 점에서 같고, 드는 비용이 다르다.</text>
+</svg>

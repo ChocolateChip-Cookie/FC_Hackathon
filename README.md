@@ -58,28 +58,7 @@ AX 실무 해커톤 **주제 01**: On-premise 환경 기반 RAG 서비스 구축
 
 거부를 **3겹**으로 막고, 그 성능을 숫자로 냅니다.
 
-```mermaid
-flowchart TD
-    Q["질의 + 계정<br/>소속 x 직책"] -->|"권한 없는 청크 제외"| R["검색<br/>dense + BM25 앙상블"]
-    R -->|"최고 유사도"| L1{"1겹<br/>임계값 이상인가"}
-    L1 -- "아니오 (0.532 &lt; 0.63)" --> X1["거절<br/>LLM 을 건너뛴다 · 비용 0"]
-
-    subgraph CALL["LLM 호출 1회 · 2겹과 3겹이 이 안에서 끝난다"]
-        direction TB
-        L2{"2겹<br/>충분성 JSON 의 ok"} -- "false" --> X2["거절<br/>missing 을 함께 표시"]
-        L2 -- "true" --> L3{"3겹<br/>인용이 검색 결과 안에 있나"}
-        L3 -- "없는 출처" --> X3["거절<br/>지어낸 인용 차단"]
-        L3 -- "통과" --> A["답변<br/>문서 / 조항 + 시행일"]
-    end
-
-    L1 -- "예" --> L2
-
-    style X1 fill:#fdf1e3,stroke:#B45309
-    style X2 fill:#fdf1e3,stroke:#B45309
-    style X3 fill:#fde8e8,stroke:#DC2626
-    style A fill:#e8f5ee,stroke:#059669
-    style CALL fill:#f5f5f7,stroke:#7a7a7a,stroke-dasharray: 4 4
-```
+![거부 3겹 흐름: 1겹은 LLM 호출 밖에서 끝난다](docs/assets/flow-abstain.svg)
 
 **점선 상자 밖으로 나가는 화살표가 1겹입니다.** 거기서 끝나면 LLM을 부르지 않으므로 비용이 0이고,
 로컬 7B CPU 추론 기준 **0.2~3초**에 끝납니다. 상자 안으로 들어간 질의만 **35~110초**를 씁니다.
@@ -101,7 +80,10 @@ flowchart TD
 
 **등급 × 부서·직책의 2차원 ACL**입니다. 판정은 `config.visible()` 하나뿐입니다.
 
-실제 판정입니다. `python eval/permission_matrix.py bm25`가 도는 그 로직입니다.
+![권한 격자: 같은 등급인데 소관이 다르면 결과가 갈린다](docs/assets/matrix-acl.svg)
+
+위 그림의 맨 아랫줄이 이 프로젝트의 보안 주장 전부입니다. 아래 표는 같은 판정을
+복사·검색 가능한 형태로 다시 적은 것입니다. `python eval/permission_matrix.py bm25`가 도는 그 로직입니다.
 
 | 문서 | 등급 | 소관 | 개발본부 사원 | 인사기획팀 | 감사팀 |
 |---|---|---|---|---|---|
@@ -121,6 +103,12 @@ flowchart TD
 프롬프트에 넣고 답변에서 가리는 방식은 인젝션 한 번에 원문이 새어나갑니다.
 
 **전수 검사**: live 179청크 × 페르소나 5 = **895조합, 반례 0건.**
+
+---
+
+## 스택
+
+![스택: 틸이 온프렘 기본값, 회색이 클라우드 전용, 점선이 미착수](docs/assets/stack.svg)
 
 ---
 
